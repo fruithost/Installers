@@ -30,6 +30,7 @@ install() {
 	  exit
 	fi
 	
+	version()
 	packetmanager_update()
 }
 
