@@ -25,13 +25,13 @@ packetmanager_update() {
 }
 
 install() {
-	if [ "$EUID" -ne 0 ]
-	  then echo "Please run as root"
-	  exit
-	fi
-	
-	version()
-	packetmanager_update()
+        if [ "$EUID" -ne 0 ]
+          then echo "Please run as root"
+          exit
+        fi
+
+        version()
+        packetmanager_update()
 }
 
 [ "_$FH_ENV" = "_testing" ] || install
