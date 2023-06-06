@@ -305,11 +305,11 @@ install_software() {
 	color "\e[32m[OK]\e[39m PHP-FPM"
 }
 
-#install_software
+install_software
 	
 ## Grab latest version fruithost files
-#create_directorys
-#fruithost_fetch
+create_directorys
+fruithost_fetch
 update_config
 
 } # this ensures the entire script is downloaded #
