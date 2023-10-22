@@ -182,6 +182,9 @@ fruithost_fetch() {
 	# Adding global scripts
 	ln -s /etc/fruithost/bin/fruithost.sh /usr/bin/fruithost
 	ln -s /etc/fruithost/bin/fruithost.sh /usr/local/bin/fruithost
+
+  	# Adding Crontabs
+	crontab /etc/fruithost/bin/cronjob
 }
 
 create_config() {
