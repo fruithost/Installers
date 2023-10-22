@@ -116,6 +116,7 @@ install_rsyslog() {
 
 create_directorys() {
 	mkdir /etc/fruithost
+	mkdir /etc/fruithost/temp
 	mkdir /var/fruithost
 	mkdir /var/fruithost/logs
 	mkdir /var/fruithost/users
@@ -183,6 +184,16 @@ create_config() {
 	echo "	# Hosting Path" >> /etc/fruithost/.config.php
 	echo "	define('HOST_PATH',			'/var/fruithost/users/');" >> /etc/fruithost/.config.php
 	echo "?>" >> /etc/fruithost/.config.php
+
+ 	# Delete old mail-config
+	rm /etc/fruithost/.mail.php
+	echo "<?php" >> /etc/fruithost/.mail.php
+	echo "	define('MAIL_EXTERNAL',		false);" >> /etc/fruithost/.mail.php
+	echo "	define('MAIL_HOSTNAME',		'smtp.yourhostname.com');" >> /etc/fruithost/.mail.php
+	echo "	define('MAIL_PORT',		25);" >> /etc/fruithost/.mail.php
+	echo "	define('MAIL_USERNAME',		'no-reply@yourdomain.com');" >> /etc/fruithost/.mail.php
+	echo "	define('MAIL_PASSWORD',		'<Password>');" >> /etc/fruithost/.mail.php
+	echo "?>" >> /etc/fruithost/.mail.php
 	
 	# Create MySQL User / Database
 	mysql --execute="CREATE DATABASE IF NOT EXISTS fruithost /*\!40100 DEFAULT CHARACTER SET utf8 */;"
