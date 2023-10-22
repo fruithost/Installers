@@ -201,7 +201,8 @@ update_config() {
 	# Apache2
 	ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-available/global.conf
 	ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
-	
+	sed -i -e 's/$hostname/my.${HOSTNAME}/g' /etc/apache2/sites-enabled/panel.conf
+ 
 	a2ensite global panel
 	a2dissite 000-default default-ssl
 	service apache2 reload
