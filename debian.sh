@@ -136,6 +136,8 @@ password_generate() {
 
 fruithost_fetch() {
 	# Remove old files
+ 	rm /etc/apache2/sites-available/global.conf
+	rm /etc/apache2/sites-available/panel.conf
  	rm -rf /etc/fruithost/panel
  	rm -rf /etc/fruithost/bin
  	rm -rf /etc/fruithost/config
