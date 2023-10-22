@@ -68,8 +68,9 @@ install_mysql() {
 
 install_php() {
 	apt install -y lsb-release apt-transport-https ca-certificates
-	wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-	echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php8.2.list
+ 	# PHP 8.2 already in prod
+	#wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
+	#echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php8.2.list
 	apt update
 	apt upgrade
 	apt install -y php8.2
