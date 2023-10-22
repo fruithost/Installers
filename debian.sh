@@ -103,6 +103,7 @@ install_apache2_mods() {
 
 install_proftp() {
 	apt-get install -y proftpd proftpd-mod-mysql
+ 	apt-get install proftpd-mod-crypto proftpd-mod-wrap
 	groupadd -g 2001 ftpd
 	useradd -u 2001 -s /bin/false -d /bin/null -g ftpd ftpd
 	color "\e[32m[OK]\e[39m Installed:"
@@ -135,18 +136,35 @@ password_generate() {
 	echo $rand
 }
 
-fruithost_fetch() {
-	# Remove old files
- 	rm /etc/apache2/sites-enabled/global.conf
-	rm /etc/apache2/sites-enabled/panel.conf
- 	rm /etc/apache2/sites-available/global.conf
-	rm /etc/apache2/sites-available/panel.conf
+fruithost_cleanup() {
+	# Directorys
  	rm -rf /etc/fruithost/panel
  	rm -rf /etc/fruithost/bin
  	rm -rf /etc/fruithost/config
  	rm -rf /etc/fruithost/themes
  	rm -rf /etc/fruithost/placeholder
  	rm -rf /etc/fruithost/modules
+
+	# Webserver
+	rm /etc/apache2/sites-enabled/global.conf
+	rm /etc/apache2/sites-enabled/panel.conf
+ 	rm /etc/apache2/sites-available/global.conf
+	rm /etc/apache2/sites-available/panel.conf
+
+ 	# FTP
+  	rm /etc/proftpd/modules.conf
+  	rm /etc/proftpd/proftpd.conf
+  	rm /etc/proftpd/sql.conf
+
+ 	# Configurations
+	rm /etc/fruithost/.config.php
+	rm /etc/fruithost/.mail.php
+	rm /etc/fruithost/.security.php
+}
+
+fruithost_fetch() {
+	# Remove old files
+ 	fruithost_cleanup()
   
 	# Grab latest versions
 	git clone https://github.com/fruithost/Panel.git /etc/fruithost/panel
@@ -168,10 +186,8 @@ fruithost_fetch() {
 
 create_config() {
 	mysql_password=$(password_generate)
-	
-	# Delete old config
-	rm /etc/fruithost/.config.php
-	
+
+ 	# Config-File
 	echo "<?php" >> /etc/fruithost/.config.php
 	echo "	# Database Connection" >> /etc/fruithost/.config.php
 	echo "	define('DATABASE_HOSTNAME',		'localhost');" >> /etc/fruithost/.config.php
@@ -185,8 +201,7 @@ create_config() {
 	echo "	define('HOST_PATH',			'/var/fruithost/users/');" >> /etc/fruithost/.config.php
 	echo "?>" >> /etc/fruithost/.config.php
 
- 	# Delete old mail-config
-	rm /etc/fruithost/.mail.php
+	# Mail-File
 	echo "<?php" >> /etc/fruithost/.mail.php
 	echo "	define('MAIL_EXTERNAL',		false);" >> /etc/fruithost/.mail.php
 	echo "	define('MAIL_HOSTNAME',		'smtp.yourhostname.com');" >> /etc/fruithost/.mail.php
@@ -202,13 +217,11 @@ create_config() {
 	mysql --execute="GRANT ALL PRIVILEGES ON fruithost.* TO 'fruithost'@'localhost';"
 	mysql --execute="FLUSH PRIVILEGES;"
 	
-	# Delete old security
-	rm /etc/fruithost/.security.php
-	
 	mysql_salt=$(password_generate)
 	password_salt=$(password_generate)
 	encryption_salt=$(password_generate)
-	
+
+ 	# Security-File
 	echo "<?php" >> /etc/fruithost/.security.php
 	echo "	# DO NOT MODIFY, IT WILL BREAKS ALL YOUR DATA!" >> /etc/fruithost/.security.php
 	echo "" >> /etc/fruithost/.security.php
@@ -231,7 +244,13 @@ update_config() {
 	a2ensite global panel
 	a2dissite 000-default default-ssl
 	service apache2 reload
- 
+
+ 	# FTP
+  	ln -s /etc/fruithost/config/ftp/modules.conf /etc/proftpd/modules.conf
+  	ln -s /etc/fruithost/config/ftp/proftpd.conf /etc/proftpd/proftpd.conf
+  	ln -s /etc/fruithost/config/ftp/sql.conf /etc/proftpd/sql.conf
+   	service proftpd reload
+   
 	create_config
 	
 	# Import SQL
@@ -253,6 +272,11 @@ update_config() {
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="DROP TABLE IF EXISTS fh_users_settings;"
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="CREATE TABLE fh_users_settings (id int(11) NOT NULL AUTO_INCREMENT, user_id int(11) DEFAULT NULL, \`key\` varchar(255) DEFAULT NULL, value longtext DEFAULT NULL, PRIMARY KEY (id)) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;"
 
+	# FTP
+ 	mysql --user="fruithost" --password="${mysql_password}" --execute="CREATE USER 'ftp'@'localhost';"
+ 	mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT ON fruithost.fh_users TO 'ftp'@'localhost';"
+ 	mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT, UPDATE ON fruithost.fh_ftp_users TO 'ftp'@'localhost';"
+  
 	# Create Admin-Account
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users VALUES ('1', 'admin', UPPER(SHA2(CONCAT('1', '${mysql_salt}', '${admin_password}'), 512)), 'admin@localhost', 'NO', '2019-05-11 12:35:14', null);"
 	
@@ -262,6 +286,8 @@ update_config() {
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'THEMES::VIEW');"
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'LOGFILES::VIEW');"
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'SERVER::VIEW');"
+ 	
+  	mysql --user="fruithost" --password="${mysql_password}" --execute="FLUSH PRIVILEGES;"
  
 	color "\e[39mThe Admin-Account was created. You can now login to:"
 	color "\e[39mURL: http://my.${HOSTNAME}/"
@@ -320,7 +346,6 @@ install_software() {
 	continue
 	install_rsyslog
 	
-
 	color "\e[36mStarting services..."
 	service apache2 restart
 	color "\e[32m[OK]\e[39m WebServer"
