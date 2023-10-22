@@ -219,7 +219,7 @@ update_config() {
  
 	a2ensite global panel
 	a2dissite 000-default default-ssl
-	service apache2 relo
+	service apache2 reload
  
 	create_config
 	
@@ -251,7 +251,7 @@ update_config() {
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'THEMES::VIEW');"
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'LOGFILES::VIEW');"
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'SERVER::VIEW');"
-	
+ 
 	color "\e[39mThe Admin-Account was created. You can now login to:"
 	color "\e[39mURL: http://my.${HOSTNAME}/"
 	color "\e[39mUsername: admin"
