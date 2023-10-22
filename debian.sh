@@ -116,6 +116,7 @@ install_rsyslog() {
 
 create_directorys() {
 	mkdir /etc/fruithost
+	mkdir /var/fruithost
 	mkdir /var/fruithost/logs
 	mkdir /var/fruithost/users
 }
