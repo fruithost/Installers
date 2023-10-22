@@ -135,6 +135,14 @@ password_generate() {
 }
 
 fruithost_fetch() {
+	# Remove old files
+ 	rm -rf /etc/fruithost/panel
+ 	rm -rf /etc/fruithost/bin
+ 	rm -rf /etc/fruithost/config
+ 	rm -rf /etc/fruithost/themes
+ 	rm -rf /etc/fruithost/placeholder
+ 	rm -rf /etc/fruithost/modules
+  
 	# Grab latest versions
 	git clone https://github.com/fruithost/Panel.git /etc/fruithost/panel
 	git clone https://github.com/fruithost/Binary.git /etc/fruithost/bin
