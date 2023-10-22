@@ -136,6 +136,8 @@ password_generate() {
 
 fruithost_fetch() {
 	# Remove old files
+ 	rm /etc/apache2/sites-enabled/global.conf
+	rm /etc/apache2/sites-enabled/panel.conf
  	rm /etc/apache2/sites-available/global.conf
 	rm /etc/apache2/sites-available/panel.conf
  	rm -rf /etc/fruithost/panel
@@ -211,13 +213,14 @@ update_config() {
 	# Apache2
 	ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-available/global.conf
 	ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
-	sed -i -e "s/\$hostname/my.${HOSTNAME}/g" /etc/apache2/sites-enabled/panel.conf
+
+ 	# Set Hostname to ServerName my.fruit.host in /etc/apache2/sites-available/panel.conf
+	sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/apache2/sites-available/panel.conf
  
 	a2ensite global panel
 	a2dissite 000-default default-ssl
-	service apache2 reload
-	
-	# Set Hostname to ServerName my.fruit.host in /etc/apache2/sites-available/panel.conf
+	service apache2 relo
+ 
 	create_config
 	
 	# Import SQL
