@@ -278,7 +278,8 @@ update_config() {
 	# FTP
  	mysql --user="fruithost" --password="${mysql_password}" --execute="CREATE USER 'ftp'@'localhost';"
  	mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT ON fruithost.fh_users TO 'ftp'@'localhost';"
- 	mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT, UPDATE ON fruithost.fh_ftp_users TO 'ftp'@'localhost';"
+ 	mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT, UPDATE ON fruithost.fh_ftp_user TO 'ftp'@'localhost';"
+ 	mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT, UPDATE ON fruithost.fh_ftp_quota_limits TO 'ftp'@'localhost';"
   
 	# Create Admin-Account
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users VALUES ('1', 'admin', UPPER(SHA2(CONCAT('1', '${mysql_salt}', '${admin_password}'), 512)), 'admin@localhost', 'NO', '2019-05-11 12:35:14', null);"
