@@ -164,7 +164,7 @@ fruithost_cleanup() {
 
 fruithost_fetch() {
 	# Remove old files
- 	fruithost_cleanup()
+ 	fruithost_cleanup
   
 	# Grab latest versions
 	git clone https://github.com/fruithost/Panel.git /etc/fruithost/panel
