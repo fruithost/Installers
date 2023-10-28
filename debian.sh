@@ -10,6 +10,11 @@ color() {
     echo -e "$1\e[39m"
 }
 
+debian() {	
+	DEBIAN_CODENAME=$(cat /etc/os-release | grep -Po 'VERSION="[0-9]+ \(\K[^)]+')
+	DEBIAN_VERSION=$(cat /etc/debian_version)
+}
+
 continue() {
 	color "Press enter to continue... (\e[47m\e[34mControl + C\e[49m\e[39m for exit)"
 	read -p ""
@@ -58,7 +63,7 @@ install_mysql() {
 	sudo mkdir -p /etc/apt/keyrings
 	sudo curl -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
 	
-	echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/10.11/debian bullseye main" >> /etc/apt/sources.list
+	echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$DEBIAN_VERSION/debian $DEBIAN_CODENAME main" >> /etc/apt/sources.list
 	
 	sudo apt-get update
 	sudo apt-get -y install mariadb-server
@@ -68,10 +73,7 @@ install_mysql() {
 
 install_php() {
 	apt install -y lsb-release apt-transport-https ca-certificates
- 	# PHP 8.2 already in prod
-	#wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-	#echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php8.2.list
-	apt update
+ 	apt update
 	apt upgrade
 	apt install -y php8.2
 	apt install -y php8.2-bcmath php8.2-bz2 php8.2-cli php8.2-curl php8.2-dba php8.2-fpm php8.2-gd php8.2-gmp php8.2-imap php8.2-interbase php8.2-intl php8.2-ldap php8.2-mbstring php8.2-mysql php8.2-odbc php8.2-pgsql php8.2-snmp php8.2-soap php8.2-sqlite3 php8.2-sybase php8.2-xmlrpc php8.2-xsl php8.2-zip
@@ -172,7 +174,10 @@ fruithost_fetch() {
 	git clone https://github.com/fruithost/Config.git /etc/fruithost/config
 	git clone https://github.com/fruithost/Themes.git /etc/fruithost/themes
 	git clone https://github.com/fruithost/Placeholder.git /etc/fruithost/placeholder
-	git clone https://github.com/fruithost/Modules.git /etc/fruithost/modules
+	
+	# Adding Modules Folder
+	#git clone https://github.com/fruithost/Modules.git /etc/fruithost/modules
+	mkdir /etc/fruithost/modules
 	
 	# Modify permissions
 	chmod 0777 /etc/fruithost/bin/cli.php
@@ -276,9 +281,9 @@ update_config() {
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="CREATE TABLE fh_users_settings (id int(11) NOT NULL AUTO_INCREMENT, user_id int(11) DEFAULT NULL, \`key\` varchar(255) DEFAULT NULL, value longtext DEFAULT NULL, PRIMARY KEY (id)) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;"
 
 	# FTP
- 	mysql --user="fruithost" --password="${mysql_password}" --execute="CREATE USER 'ftp'@'localhost';"
- 	mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT ON fruithost.fh_users TO 'ftp'@'localhost';"
- 	mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT, UPDATE ON fruithost.fh_ftp_users TO 'ftp'@'localhost';"
+ 	#mysql --user="fruithost" --password="${mysql_password}" --execute="CREATE USER 'ftp'@'localhost';"
+ 	#mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT ON fruithost.fh_users TO 'ftp'@'localhost';"
+ 	#mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT, UPDATE ON fruithost.fh_ftp_users TO 'ftp'@'localhost';"
   
 	# Create Admin-Account
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users VALUES ('1', 'admin', UPPER(SHA2(CONCAT('1', '${mysql_salt}', '${admin_password}'), 512)), 'admin@localhost', 'NO', '2019-05-11 12:35:14', null);"
@@ -305,7 +310,7 @@ install_software() {
 	  exit
 	fi
 
-	color "\e[33mWelcome to fruithost installer for Debian 11"
+	color "\e[33mWelcome to fruithost installer for Debian [Version=$DEBIAN_VERSION, Codename=$DEBIAN_CODENAME]"
 	color "\e[39mDo you want to install all recommended softwares?"
 	continue
 	
@@ -360,11 +365,11 @@ install_software() {
 	color "\e[32m[OK]\e[39m PHP-FPM"
 }
 
+debian
 install_software
 	
 ## Grab latest version fruithost files
 create_directorys
 fruithost_fetch
 update_config
-
 } # this ensures the entire script is downloaded #
