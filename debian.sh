@@ -371,7 +371,7 @@ install_software() {
 	color "\e[32m[OK]\e[39m MySQL-Database"
 	service proftpd restart
 	color "\e[32m[OK]\e[39m FTP-Service"
-	service php8.2-fpm start
+	service "php$PHP_VERSION-fpm" start
 	color "\e[32m[OK]\e[39m PHP-FPM"
 }
 
