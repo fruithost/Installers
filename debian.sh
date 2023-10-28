@@ -102,9 +102,9 @@ install_pecl() {
 install_apache2_mods() {
 	# PHP-FPM & Apache
 	a2enmod proxy_fcgi setenvif headers
-	a2enconf php8.2-fpm
+	a2enconf "php$PHP_VERSION-fpm"
 	a2enmod actions fastcgi alias ssl rewrite
-	a2dismod php8.2
+	a2dismod "php$PHP_VERSION"
 	
 	# protected dirs for apache2
 	apt-get install -y apache2-utils libaprutil1 libaprutil1-dbd-mysql
