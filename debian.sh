@@ -2,6 +2,13 @@
 
 { # this ensures the entire script is downloaded #
 
+## Configuration ##
+USERNAME=fruithost
+GROUP=fruithost
+UID=1010
+
+PHP_VERSION=8.2
+
 has() {
 	type "$1" > /dev/null 2>&1
 }
@@ -37,9 +44,9 @@ packetmanager_update() {
 
 # fruithost User
 add_user() {
-	groupadd -g 1010 fruithost
-	useradd -u 1010 -s /bin/false -d /bin/null -g fruithost fruithost
-	color "\e[32m[OK]\e[39m User: fruithost, Group: fruithost"
+	groupadd -g $UID $USERNAME
+	useradd -u $UID -s /bin/false -d /bin/null -g $GROUP $USERNAME
+	color "\e[32m[OK]\e[39m User: $USERNAME, Group: $GROUP"
 }
 
 # Set hostname
@@ -75,9 +82,12 @@ install_php() {
 	apt install -y lsb-release apt-transport-https ca-certificates
  	apt update
 	apt upgrade
-	apt install -y php8.2
-	apt install -y php8.2-bcmath php8.2-bz2 php8.2-cli php8.2-curl php8.2-dba php8.2-fpm php8.2-gd php8.2-gmp php8.2-imap php8.2-interbase php8.2-intl php8.2-ldap php8.2-mbstring php8.2-mysql php8.2-odbc php8.2-pgsql php8.2-snmp php8.2-soap php8.2-sqlite3 php8.2-sybase php8.2-xmlrpc php8.2-xsl php8.2-zip
-	apt install -y php8.2-dev php-pear libz-dev
+	apt install -y "php$PHP_VERSION"
+	apt install -y "php$PHP_VERSION-bcmath" "php$PHP_VERSION-bz2" "php$PHP_VERSION-uploadprogress" "php$PHP_VERSION-cli" "php$PHP_VERSION-curl" "php$PHP_VERSION-dba" "php$PHP_VERSION-fpm" "php$PHP_VERSION-gd" "php$PHP_VERSION-gmp" "php$PHP_VERSION-imap" "php$PHP_VERSION-interbase" "php$PHP_VERSION-intl" "php$PHP_VERSION-ldap" "php$PHP_VERSION-mbstring" "php$PHP_VERSION-mysql" "php$PHP_VERSION-odbc" "php$PHP_VERSION-pgsql" "php$PHP_VERSION-snmp" "php$PHP_VERSION-soap" "php$PHP_VERSION-sqlite3" "php$PHP_VERSION-sybase" "php$PHP_VERSION-xmlrpc" "php$PHP_VERSION-xsl" "php$PHP_VERSION-zip"
+	apt install -y "php$PHP_VERSION-dev" php-pear libz-dev
+	
+	# @ToDo Debug
+	apt install -y "php$PHP_VERSION-xdebug"
 	
 	color "\e[32m[OK]\e[39m Installed:"
 	php --version
