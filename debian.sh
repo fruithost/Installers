@@ -328,10 +328,12 @@ install_software() {
 	
 	color "\e[36mUpdate packet manager and install system components..."
 	continue
+ 
 	packetmanager_update
 	
 	color "\e[36mAdding user to the system..."
 	continue
+ 
 	add_user
 	
 	color "\e[36mSet the system hostname..."
@@ -340,30 +342,37 @@ install_software() {
 	
 	color "\e[36mInstall Apache2 WebServer..."
 	continue
+ 
 	install_webserver
 	
 	color "\e[36mInstall MariaDB MySQL-Server..."
 	continue
+ 
 	install_mysql
 	
 	color "\e[36mInstall PHP..."
 	continue
+ 
 	install_php
 	
 	color "\e[36mInstall PECL-Extensions..."
 	continue
+ 
 	install_pecl
 	
 	color "\e[36mInstall Apache2-Mods..."
 	continue
+ 
 	install_apache2_mods
 	
 	color "\e[36mInstall ProFTP-Server..."
 	continue
+ 
 	install_proftp
 	
 	color "\e[36mInstall RSyslog..."
 	continue
+ 
 	install_rsyslog
 	
 	color "\e[36mStarting services..."
