@@ -4,8 +4,8 @@
 
 ## Configuration ##
 USERNAME=fruithost
-GROUP=fruithost
-USERID=1010
+USER_GROUP=fruithost
+USER_ID=1010
 
 PHP_VERSION=8.2
 
@@ -44,9 +44,9 @@ packetmanager_update() {
 
 # fruithost User
 add_user() {
-	groupadd -g $USERID $USERNAME
-	useradd -u $USERID -s /bin/false -d /bin/null -g $GROUP $USERNAME
-	color "\e[32m[OK]\e[39m User: $USERNAME, Group: $GROUP"
+	groupadd -g $USER_ID $USERNAME
+	useradd -u $USER_ID -s /bin/false -d /bin/null -g $USER_GROUP $USERNAME
+	color "\e[32m[OK]\e[39m User: $USERNAME, Group: $USER_GROUP"
 }
 
 # Set hostname
@@ -136,7 +136,7 @@ create_directorys() {
 }
 
 password_generate() {
-	set="abcdefghijklmonpqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	set="abcdefghijklmonpqrstuvwxyz-_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	n=28
 	rand=""
 	
