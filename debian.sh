@@ -215,8 +215,9 @@ create_config() {
 	echo "	define('DATABASE_NAME',			'fruithost');" >> /etc/fruithost/.config.php
 	echo "	define('DATABASE_PREFIX',		'fh_');" >> /etc/fruithost/.config.php
 	echo "" >> /etc/fruithost/.config.php
-	echo "	# Hosting Path" >> /etc/fruithost/.config.php
+	echo "	# Paths" >> /etc/fruithost/.config.php
 	echo "	define('HOST_PATH',			'/var/fruithost/users/');" >> /etc/fruithost/.config.php
+	echo "	define('LOG_PATH',			'/var/fruithost/logs/');" >> /etc/fruithost/.config.php
 	echo "?>" >> /etc/fruithost/.config.php
 
 	# Mail-File
