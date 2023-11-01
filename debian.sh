@@ -5,7 +5,7 @@
 ## Configuration ##
 USERNAME=fruithost
 GROUP=fruithost
-UID=1010
+USERID=1010
 
 PHP_VERSION=8.2
 
@@ -44,8 +44,8 @@ packetmanager_update() {
 
 # fruithost User
 add_user() {
-	groupadd -g $UID $USERNAME
-	useradd -u $UID -s /bin/false -d /bin/null -g $GROUP $USERNAME
+	groupadd -g $USERID $USERNAME
+	useradd -u $USERID -s /bin/false -d /bin/null -g $GROUP $USERNAME
 	color "\e[32m[OK]\e[39m User: $USERNAME, Group: $GROUP"
 }
 
