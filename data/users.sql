@@ -8,5 +8,6 @@ CREATE TABLE `fh_users` (
   `lost_enabled` enum('YES','NO') DEFAULT 'NO',
   `lost_time` datetime DEFAULT NULL,
   `lost_token` varchar(255) DEFAULT NULL,
+  `deleted` enum('YES','NO') DEFAULT 'NO',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
