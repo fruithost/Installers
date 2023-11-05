@@ -108,8 +108,8 @@ install_apache2_mods() {
 	
 	# protected dirs for apache2
 	apt-get install -y apache2-utils libaprutil1 libaprutil1-dbd-mysql
-	a2enmod authn_socache dbd authn_dbd authn_dbm
-	
+	apt-get install -y libapache2-mod-authnz-external
+ 	a2enmod authn_socache dbd authn_dbd authn_dbm authnz_external
 	service apache2 restart
 }
 
