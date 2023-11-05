@@ -168,6 +168,9 @@ fruithost_cleanup() {
   	rm /etc/proftpd/proftpd.conf
   	rm /etc/proftpd/sql.conf
 
+   	# PHP
+	rm "/etc/php/$PHP_VERSION/fpm/php.ini"
+ 
  	# Configurations
 	rm /etc/fruithost/.config.php
 	rm /etc/fruithost/.mail.php
@@ -264,6 +267,10 @@ update_config() {
 	a2dissite 000-default default-ssl
 	service apache2 reload
 
+ 	# PHP
+  	ln -s /etc/fruithost/config/php/php.ini "/etc/php/$PHP_VERSION/fpm/php.ini"
+	service "php$PHP_VERSION-fpm" restart
+ 
  	# FTP
   	ln -s /etc/fruithost/config/ftp/modules.conf /etc/proftpd/modules.conf
   	ln -s /etc/fruithost/config/ftp/proftpd.conf /etc/proftpd/proftpd.conf
