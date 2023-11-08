@@ -304,7 +304,7 @@ update_config() {
  	#mysql --user="fruithost" --password="${mysql_password}" --execute="GRANT SELECT, UPDATE ON fruithost.fh_ftp_users TO 'ftp'@'localhost';"
   
 	# Create Admin-Account
-	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users VALUES ('1', 'admin', UPPER(SHA2(CONCAT('1', '${mysql_salt}', '${admin_password}'), 512)), 'admin@localhost', 'NO', '2019-05-11 12:35:14', null);"
+	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users VALUES ('1', 'admin', UPPER(SHA2(CONCAT('1', '${mysql_salt}', '${admin_password}'), 512)), 'admin@localhost', 'NO', null, null, 'NO');"
 	
 	# Set Permissions
 	mysql --user="fruithost" --password="${mysql_password}" --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'USERS::VIEW');"
