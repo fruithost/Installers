@@ -6,7 +6,7 @@ Installations routines for some Linux Distributions!
 # Installation
 All informations and installations-instructions can be find in the [Documentation](https://github.com/fruithost/Documentation)!
 
-[![INSTALL_NOW]](https://github.com/fruithost/Documentation/blob/main/Installation.md)
+[![INSTALL_NOW]](https://github.com/fruithost/Documentation/tree/main/Installation)
 
 # Support us! ![Sponsors](https://img.shields.io/github/sponsors/fruithost?style=social)
 Donations are an important contribution to the development of OpenSource projects. With your donation you can help us to advance our project. Your support enables us to support the programming.
