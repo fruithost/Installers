@@ -1,5 +1,5 @@
 # Installers
-Installations routines for some Linux Distributions!
+Installations routines to setup ![](https://raw.githubusercontent.com/fruithost/Documentation/main/Images/LOGO_TEXT.png) **fruithost** on some Linux Distributions!
 
 **Running a server has never been so easy!**
 
