@@ -57,6 +57,13 @@ set_hostname() {
 	color "\e[32m[OK]\e[39m Hostname: $varname"
 }
 
+# Install Network-Tools
+install_net_tools() {
+	apt-get install lshw -y
+	color "\e[32m[OK]\e[39m Installed:"
+	lshw -version
+}
+
 # Webserver
 install_webserver() {
 	apt-get install apache2 -y
@@ -346,6 +353,9 @@ install_software() {
 	color "\e[36mSet the system hostname..."
 	reads "Hostname:"
 	set_hostname
+
+	color "\e[36mInstall Network-Tools..."
+ 	install_net_tools
 	
 	color "\e[36mInstall Apache2 WebServer..."
 	continue
