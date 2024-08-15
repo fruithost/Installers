@@ -31,7 +31,7 @@ set -efu
 		apt update
 		apt upgrade
 		apt dist-upgrade
-		apt -y install dnsutils git tzdata tzdata
+		apt -y install dnsutils git tzdata tzdata jq
 		apt -y install sudo vim make zip unzip bash-completion curl dbus apt-transport-https
 		export DEBIAN_FRONTEND=noninteractive
 		color "\e[32m[OK]\e[39m Update complete"
@@ -65,8 +65,7 @@ set -efu
 	# Install Network-Tools
 	install_net_tools() {
 		apt -y install lshw
-		color "\e[32m[OK]\e[39m Installed:"
-		lshw -version
+		color "\e[32m[OK]\e[39m Installed."
 	}
 
 	# Webserver
@@ -83,19 +82,22 @@ set -efu
 
 	# Adding MariaDB Repository
 	install_mysql() {
-		. /etc/os-release
+		color "Fetching system informations." 
+		DEBIAN_CODENAME=$(cat /etc/os-release | grep -Po 'VERSION="[0-9]+ \(\K[^)]+')
+		DEBIAN_VERSION=$(cat /etc/debian_version)
 		
-		mkdir -p /etc/apt/keyrings
-		curl -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
+		[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
 		
-		# [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp]
+		color "Getting keyring for signed packages." 
+		curl -s -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
 		
-		echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+		color "Adding MariaDB repository to the system." 
+		echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/debian $DEBIAN_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
 		
 		apt update
 		apt -y install mariadb-server
 		color "\e[32m[OK]\e[39m Installed:"
-		mysql --version
+		mariadb --version
 	}
 
 	install_php() {
@@ -144,7 +146,7 @@ set -efu
 			MOD=${APACHE_MODS[$i]}
 			
 			if [ -f "/etc/apache2/mods-available/$MOD.load" ]; then
-				if [ -f "/etc/apache2/mods-enabled/$MOD.load" ]; then
+				if [ ! -f "/etc/apache2/mods-enabled/$MOD.load" ]; then
 					a2enmod "$MOD"
 					color "\e[32m[OK]\e[39m Apache-Module $MOD enabled."
 				else
@@ -165,8 +167,8 @@ set -efu
 	}
 
 	install_proftp() {
-		apt -y install proftpd-basic proftpd-mod-mysql
-		#apt -y install proftpd-mod-crypto proftpd-mod-wrap
+		apt -y install proftpd proftpd-mod-mysql
+		apt -y install proftpd-mod-crypto proftpd-mod-wrap
 		color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
 		
 		if [ $(getent group ftpd) ]; then
@@ -269,9 +271,14 @@ set -efu
 		git clone https://github.com/fruithost/Placeholder.git /etc/fruithost/placeholder
 		
 		# Adding Modules Folder
-		#color "\e[36mFetch Modules from fruithost..."
-		#git clone https://github.com/fruithost/Modules.git /etc/fruithost/modules
-		[ ! -d "/etc/fruithost/modules" ] && mkdir /etc/fruithost/modules
+		read -p $'Do you want to download all available Modules for fruithost? (y/n): ' go;
+		if [ "$go" = 'y' ]; then
+			color "\e[36mFetch Modules from fruithost..."
+			git clone https://github.com/fruithost/Modules.git /etc/fruithost/modules
+		else
+			color "\e[1;33m[WARN]\e[0;39m Skipping download Modules."
+			[ ! -d "/etc/fruithost/modules" ] && mkdir /etc/fruithost/modules
+		fi
 		
 		# Modify permissions
 		color "\e[36mSet File-System Permissions..."
@@ -323,7 +330,12 @@ set -efu
 		# Create MySQL User / Database
 		color "\e[36mCreate Database-User for the Panel..."
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="CREATE DATABASE IF NOT EXISTS fruithost;"
-		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="DROP USER fruithost@localhost;"
+		
+		USER_EXISTS=$(mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="SELECT COUNT(*) AS U FROM mysql.user WHERE User='fruithost';")
+		if [ "$USER_EXISTS" != '0' ]; then
+			mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="DROP USER fruithost@localhost;"
+		fi
+		
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="CREATE USER fruithost@localhost IDENTIFIED BY '${mysql_password}';"
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="GRANT ALL PRIVILEGES ON fruithost.* TO 'fruithost'@'localhost';"
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="FLUSH PRIVILEGES;"
@@ -350,9 +362,18 @@ set -efu
 		[ ! -f "/etc/apache2/sites-available/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-available/global.conf
 		[ ! -f "/etc/apache2/sites-available/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
 
-		# Set Hostname to ServerName my.fruit.host in /etc/apache2/sites-available/panel.conf
+		# Set Hostname to ServerName my.fruit.host in /etc/fruithost/config/apache2/panel.conf
+		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/fruithost/config/apache2/panel.conf
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/apache2/sites-available/panel.conf
-	 
+		
+		if echo $(cat /etc/apache2/sites-available/panel.conf) | grep -q "\$hostname"; then
+			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-available/panel.conf"
+		fi
+		
+		if echo $(cat /etc/fruithost/config/apache2/panel.conf) | grep -q "\$hostname"; then
+			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-available/panel.conf"
+		fi
+		
 		a2ensite global panel
 		a2dissite 000-default default-ssl
 		service apache2 reload
@@ -406,6 +427,14 @@ set -efu
 		
 		mariadb --socket=/run/mysqld/mysqld.sock --execute="FLUSH PRIVILEGES;"
 	 	
+		# Enable Modules?
+		read -p $'Enable all fruithost Modules? (y/n): ' go;
+		if [ "$go" = 'y' ]; then
+			color "\e[36mEnable all Modules..."
+			fruithost install @
+			fruithost enable @
+		fi
+		
 		color "\n\e[90m\033[47m\e[K"
 		color "\e[1;90m\033[1;47m\e[K  Setup was finished!"
 		color "\e[1;90m\033[47m\e[K  The Admin-Account was created. You can now login to:\n\e[K"
@@ -427,7 +456,7 @@ set -efu
 		
 		color "\e[36mSet the system hostname..."
 		read -p $'Hostname: ' host;
-		set_hostname "$host"
+		set_hostname $host
 
 		color "\e[36mInstall Network-Tools..."
 		install_net_tools
@@ -454,14 +483,42 @@ set -efu
 		install_rsyslog
 		
 		color "\e[36mStarting services..."
-		service apache2 restart
-		color "\e[32m[OK]\e[39m WebServer"
-		service mariadb restart
-		color "\e[32m[OK]\e[39m MySQL-Database"
-		service proftpd restart
-		color "\e[32m[OK]\e[39m FTP-Service"
-		service "php$PHP_VERSION-fpm" start
-		color "\e[32m[OK]\e[39m PHP-FPM"
+		
+		# Webserver
+		service apache2 restart || apache_failed=1
+		if [ ${apache_failed:-0} -eq 1 ]
+		then
+			color "\e[31m[ERROR]\e[39m WebServer"
+		else
+			color "\e[32m[OK]\e[39m WebServer"
+		fi
+		
+		# Database
+		service mariadb restart || mariadb_failed=1
+		if [ ${mariadb_failed:-0} -eq 1 ]
+		then
+			color "\e[31m[ERROR]\e[39m MySQL-Database"
+		else
+			color "\e[32m[OK]\e[39m MySQL-Database"
+		fi
+		
+		# Start FTP
+		service proftpd restart || ftp_failed=1
+		if [ ${ftp_failed:-0} -eq 1 ]
+		then
+			color "\e[31m[ERROR]\e[39m FTP-Service"
+		else
+			color "\e[32m[OK]\e[39m FTP-Service"
+		fi
+		
+		# PHP
+		service "php$PHP_VERSION-fpm" restart || php_failed=1
+		if [ ${php_failed:-0} -eq 1 ]
+		then
+			color "\e[31m[ERROR]\e[39m PHP-FPM ($PHP_VERSION)"
+		else
+			color "\e[32m[OK]\e[39m PHP-FPM ($PHP_VERSION)"
+		fi
 	}
 
 # CALL #
