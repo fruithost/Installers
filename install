@@ -88,6 +88,6 @@ set -efu
 	
 	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch"
 	
-	bash <(curl -L --no-progress-meter -o- $url || wget -q -O - $url)
+	bash <(curl -L -s -o- $url || wget -q -O - $url)
 	
 } # this ensures the entire script is downloaded #
