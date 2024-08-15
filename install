@@ -5,14 +5,14 @@ set -efu
 
 # METHODS #
 	color() {
-		echo -e "$1\e[39m\033[0;37m"
+		echo -e "$1\e[39m\033[0;37m\e[0m"
 	}
 	
 	error() {
-		color "\n\e[91m\033[41m                                                                   \e[K"
-		color "\e[1;37m\033[41m  ERROR                                                            \e[K"
-		color "\e[1;37m\033[41m  $1\e[K"
-		color "\e[91m\033[41m                                                                   \e[K\n"
+		color "\n\e[91m\033[41m\e[K"
+		color "\e[1;37m\033[41m\e[K  ERROR"
+		color "\e[1;37m\033[41m\e[K  $1\e[K"
+		color "\e[91m\033[41m\e[K \n"
 	}
 	
 	detect_os() {
@@ -46,7 +46,7 @@ set -efu
 					Ubuntu)
 						;;
 					*)
-						error "Unknown OS is specified in /etc/lsb-release                      "
+						error "Unknown OS is specified in /etc/lsb-release!"
 						;;
 				esac
 			
@@ -62,13 +62,13 @@ set -efu
 						os_name="RedHat";
 						;;
 					*)
-						error "Unknown OS is specified in /etc/redhat-release                   "
+						error "Unknown OS is specified in /etc/redhat-release!"
 						;;
 				esac
 			fi
 			
 		else
-			error "You've tried to install fruithost on \033[1;37m$os_type. 😒                 \n  Currently, fruithost can only installed on Linux-Systems, Sorry! "
+			error "You've tried to install fruithost on \033[1;37m$os_type. 😒\nCurrently, fruithost can only installed on Linux-Systems, Sorry!"
 		fi
 	}
 
