@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -efu
+
+{ # this ensures the entire script is downloaded #
+
+# METHODS #
+	color() {
+		echo -e "$1\e[39m\033[0;37m"
+	}
+	
+	error() {
+		color "\n\e[91m\033[41m                                                                   "
+		color "\e[1;37m\033[41m  ERROR                                                            "
+		color "\e[1;37m\033[41m  $1"
+		color "\e[91m\033[41m                                                                   \n"
+	}
+	
+	detect_os() {
+		os_arch=`uname -m`
+		os_type=`uname -s`
+		
+		case $os_arch in
+		i?86) os_arch="i386" ;;
+			*) : ;;
+		esac
+		
+		if [ "$os_type" = 'Linux' ]; then
+			# Debian / Ubuntu
+			if [ -e '/etc/debian_version' ]; then
+			
+				# Mostly ubuntu, but not debian
+				if [ -e '/etc/lsb-release' ]; then
+					. /etc/lsb-release
+					os_name=$DISTRIB_ID
+					os_version=$DISTRIB_RELEASE
+				else
+					os_name='Debian'
+					os_version=`head -1 /etc/debian_version`
+				fi
+				
+				case $os_name in
+					Debian)
+						os_version=`echo "$os_version" | grep -o "^[0-9]\+"`
+						[ -z "$os_version" ] || os_version="$os_version.0"
+						;;
+					Ubuntu)
+						;;
+					*)
+						error "Unknown OS is specified in /etc/lsb-release                      "
+						;;
+				esac
+			
+			# RedHat
+			elif [ -e '/etc/redhat-release' ]; then
+				os_name=`awk '{print $1}' /etc/redhat-release`
+				os_version=`head -1 /etc/redhat-release | sed -e 's/[^0-9.]*\([0-9.]*\).*/\1/g' | awk -F'.' '{print $1}'`
+				
+				case $os_name$os_version$os_arch in
+					CentOS*|Cloud*|Virtuozzo*|AlmaLinux*|Rocky*)
+						;;
+					Red*)
+						os_name="RedHat";
+						;;
+					*)
+						error "Unknown OS is specified in /etc/redhat-release                   "
+						;;
+				esac
+			fi
+			
+		else
+			error "You've tried to install fruithost on \033[1;37m$os_type. 😒                 \n  Currently, fruithost can only installed on Linux-Systems, Sorry! "
+		fi
+	}
+
+
+# CALL #
+	color "\e[33mWelcome to fruithost installer!"
+	
+	if [ `id -u` -ne 0 ]; then
+	  error "Please run the installation as root!                             "
+	  exit
+	fi
+	
+	read -p "Do you want to install fruithost on your system? (y/n): " go;
+	if [ "$go" != 'y' ]; then
+		error "You have cancel the installation.                                "
+		exit;
+	fi
+	
+	color "\e[33mDetecting OS,..."
+	detect_os
+	
+	color "TYPE: $os_type\nNAME: $os_name\nVersion: $os_version\nArch: $os_arch"
+	
+	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch/"
+	
+	bash <(curl $url || wget -O - $url)
+	
+} # this ensures the entire script is downloaded #
