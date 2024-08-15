@@ -31,7 +31,7 @@ set -efu
 		apt update
 		apt upgrade
 		apt dist-upgrade
-		apt -y install dnsutils git tzdata tzdata
+		apt -y install dnsutils git tzdata tzdata jq
 		apt -y install sudo vim make zip unzip bash-completion curl dbus apt-transport-https
 		export DEBIAN_FRONTEND=noninteractive
 		color "\e[32m[OK]\e[39m Update complete"
@@ -165,7 +165,7 @@ set -efu
 	}
 
 	install_proftp() {
-		apt -y install proftpd-basic proftpd-mod-mysql
+		apt -y install proftpd proftpd-mod-mysql
 		#apt -y install proftpd-mod-crypto proftpd-mod-wrap
 		color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
 		
@@ -269,9 +269,14 @@ set -efu
 		git clone https://github.com/fruithost/Placeholder.git /etc/fruithost/placeholder
 		
 		# Adding Modules Folder
-		#color "\e[36mFetch Modules from fruithost..."
-		#git clone https://github.com/fruithost/Modules.git /etc/fruithost/modules
-		[ ! -d "/etc/fruithost/modules" ] && mkdir /etc/fruithost/modules
+		read -p $'Do you want to download all available Modules for fruithost? (y/n): ' go;
+		if [ "$go" = 'y' ]; then
+			color "\e[36mFetch Modules from fruithost..."
+			git clone https://github.com/fruithost/Modules.git /etc/fruithost/modules
+		else
+			color "\e[1;33m[WARN]\e[0;39m Skipping download Modules."
+			[ ! -d "/etc/fruithost/modules" ] && mkdir /etc/fruithost/modules
+		fi
 		
 		# Modify permissions
 		color "\e[36mSet File-System Permissions..."
@@ -323,7 +328,12 @@ set -efu
 		# Create MySQL User / Database
 		color "\e[36mCreate Database-User for the Panel..."
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="CREATE DATABASE IF NOT EXISTS fruithost;"
-		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="DROP USER fruithost@localhost;"
+		
+		USER_EXISTS=$(mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="SELECT COUNT(*) AS U FROM mysql.user WHERE User='fruithost';")
+		if [ "$USER_EXISTS" != '0' ]; then
+			mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="DROP USER fruithost@localhost;"
+		fi
+		
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="CREATE USER fruithost@localhost IDENTIFIED BY '${mysql_password}';"
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="GRANT ALL PRIVILEGES ON fruithost.* TO 'fruithost'@'localhost';"
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="FLUSH PRIVILEGES;"
@@ -406,6 +416,13 @@ set -efu
 		
 		mariadb --socket=/run/mysqld/mysqld.sock --execute="FLUSH PRIVILEGES;"
 	 	
+		# Enable Modules?
+		read -p $'Enable all fruithost Modules? (y/n): ' go;
+		if [ "$go" = 'y' ]; then
+			color "\e[36mEnable all Modules..."
+			fruithost enable *
+		fi
+		
 		color "\n\e[90m\033[47m\e[K"
 		color "\e[1;90m\033[1;47m\e[K  Setup was finished!"
 		color "\e[1;90m\033[47m\e[K  The Admin-Account was created. You can now login to:\n\e[K"
