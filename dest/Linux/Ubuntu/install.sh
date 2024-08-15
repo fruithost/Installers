@@ -65,8 +65,7 @@ set -efu
 	# Install Network-Tools
 	install_net_tools() {
 		apt -y install lshw
-		color "\e[32m[OK]\e[39m Installed:"
-		lshw -version
+		color "\e[32m[OK]\e[39m Installed."
 	}
 
 	# Webserver
@@ -83,19 +82,21 @@ set -efu
 
 	# Adding MariaDB Repository
 	install_mysql() {
+		color "Fetching system informations." 
 		. /etc/os-release
 		
-		mkdir -p /etc/apt/keyrings
-		curl -L -s -o- /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
+		[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
 		
-		# [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp]
+		color "Getting keyring for signed packages." 
+		curl -s -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
 		
+		color "Adding MariaDB repository to the system." 
 		echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
 		
 		apt update
 		apt -y install mariadb-server
 		color "\e[32m[OK]\e[39m Installed:"
-		mysql --version
+		mariadb --version
 	}
 
 	install_php() {
@@ -144,7 +145,7 @@ set -efu
 			MOD=${APACHE_MODS[$i]}
 			
 			if [ -f "/etc/apache2/mods-available/$MOD.load" ]; then
-				if [ -f "/etc/apache2/mods-enabled/$MOD.load" ]; then
+				if [ ! -f "/etc/apache2/mods-enabled/$MOD.load" ]; then
 					a2enmod "$MOD"
 					color "\e[32m[OK]\e[39m Apache-Module $MOD enabled."
 				else
@@ -420,7 +421,8 @@ set -efu
 		read -p $'Enable all fruithost Modules? (y/n): ' go;
 		if [ "$go" = 'y' ]; then
 			color "\e[36mEnable all Modules..."
-			fruithost enable *
+			fruithost install @
+			fruithost enable @
 		fi
 		
 		color "\n\e[90m\033[47m\e[K"
