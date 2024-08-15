@@ -5,7 +5,7 @@ set -efu
 
 # METHODS #
 	color() {
-		echo -e "$1\e[39m\033[0;37m"
+		echo -e "$1\e[39m\033[0;37m\e[0m"
 	}
 	
 	error() {
@@ -20,13 +20,13 @@ set -efu
 	color "\e[33mUbuntu Preparator!"
 	
 	if [ `id -u` -ne 0 ]; then
-	  error "Please run the installation as root!                             "
+	  error "Please run the installation as root!"
 	  exit
 	fi
 	
 	read -p "Do you want to install fruithost on your system? (y/n): " go;
 	if [ "$go" != 'y' ]; then
-		error "You have cancel the installation.                                "
+		error "You have cancel the installation."
 		exit;
 	fi
 	
