@@ -92,7 +92,7 @@ set -efu
 	
 	color "TYPE: $os_type\nNAME: $os_name\nVersion: $os_version\nArch: $os_arch"
 	
-	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch/"
+	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch"
 	
 	bash <(curl $url || wget -O - $url)
 	
