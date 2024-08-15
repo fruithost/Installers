@@ -9,10 +9,10 @@ set -efu
 	}
 	
 	error() {
-		color "\n\e[91m\033[41m                                                                   "
-		color "\e[1;37m\033[41m  ERROR                                                            "
-		color "\e[1;37m\033[41m  $1"
-		color "\e[91m\033[41m                                                                   \n"
+		color "\n\e[91m\033[41m                                                                   \e[K"
+		color "\e[1;37m\033[41m  ERROR                                                            \e[K"
+		color "\e[1;37m\033[41m  $1\e[K"
+		color "\e[91m\033[41m                                                                   \e[K\n"
 	}
 
 
