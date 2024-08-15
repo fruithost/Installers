@@ -86,7 +86,7 @@ set -efu
 		. /etc/os-release
 		
 		mkdir -p /etc/apt/keyrings
-		curl -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
+		curl -L -s -o- /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
 		
 		# [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp]
 		
