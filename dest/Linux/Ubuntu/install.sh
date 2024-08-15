@@ -33,7 +33,7 @@ set -efu
 	  exit
 	fi
 	
-	read -p $'Do you want to install fruithost on your system? (y/n) (\e[47m\e[34mControl + C\e[49m\e[39m for exit): ' go;
+	read -p $'Do you want to install fruithost on your system? (y/n): ' go;
 	if [ "$go" != 'y' ]; then
 		error "You have cancel the installation."
 		exit;
