@@ -482,10 +482,24 @@ set -efu
 		install_rsyslog
 		
 		color "\e[36mStarting services..."
-		service apache2 restart
-		color "\e[32m[OK]\e[39m WebServer"
-		service mariadb restart
-		color "\e[32m[OK]\e[39m MySQL-Database"
+		
+		# Webserver
+		service apache2 restart || apache_failed=1
+		if [ ${apache_failed:-0} -eq 1 ]
+		then
+			color "\e[31m[ERROR]\e[39m WebServer"
+		else
+			color "\e[32m[OK]\e[39m WebServer"
+		fi
+		
+		# Database
+		service mariadb restart || mariadb_failed=1
+		if [ ${mariadb_failed:-0} -eq 1 ]
+		then
+			color "\e[31m[ERROR]\e[39m MySQL-Database"
+		else
+			color "\e[32m[OK]\e[39m MySQL-Database"
+		fi
 		
 		# Start FTP
 		service proftpd restart || ftp_failed=1
@@ -496,8 +510,14 @@ set -efu
 			color "\e[32m[OK]\e[39m FTP-Service"
 		fi
 		
-		service "php$PHP_VERSION-fpm" start
-		color "\e[32m[OK]\e[39m PHP-FPM"
+		# PHP
+		service "php$PHP_VERSION-fpm" restart || php_failed=1
+		if [ ${php_failed:-0} -eq 1 ]
+		then
+			color "\e[31m[ERROR]\e[39m PHP-FPM ($PHP_VERSION)"
+		else
+			color "\e[32m[OK]\e[39m PHP-FPM ($PHP_VERSION)"
+		fi
 	}
 
 # CALL #
