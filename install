@@ -9,10 +9,10 @@ set -efu
 	}
 	
 	error() {
-		color "\n\e[91m\033[41m                                                                   "
-		color "\e[1;37m\033[41m  ERROR                                                            "
-		color "\e[1;37m\033[41m  $1"
-		color "\e[91m\033[41m                                                                   \n"
+		color "\n\e[91m\033[41m                                                                   \e[K"
+		color "\e[1;37m\033[41m  ERROR                                                            \e[K"
+		color "\e[1;37m\033[41m  $1\e[K"
+		color "\e[91m\033[41m                                                                   \e[K\n"
 	}
 	
 	detect_os() {
@@ -84,10 +84,10 @@ set -efu
 	color "\e[33mDetecting OS,..."
 	detect_os
 	
-	color "TYPE: $os_type\nNAME: $os_name\nVersion: $os_version\nArch: $os_arch"
+	color "TYPE: $os_type\nNAME: $os_name\nVersion: $os_version\nArch: $os_arch\n"
 	
 	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch"
 	
-	bash <(curl -L -s -o- $url || wget -q -O - $url)
+	bash <(curl -H 'Cache-Control: no-cache, no-store' -L -s -o- $url || wget -q -O - $url)
 	
 } # this ensures the entire script is downloaded #
