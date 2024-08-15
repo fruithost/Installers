@@ -84,10 +84,10 @@ set -efu
 	color "\e[33mDetecting OS,..."
 	detect_os
 	
-	color "    \e[1;35mType:\e[0;0m          $os_type"
-	color "    \e[1;35mName:\e[0;0m          $os_name"
-	color "    \e[1;35mVersion:\e[0;0m          $os_version"
-	color "    \e[1;35mArchitecture:\e[0;0m     $os_arch"
+	color "    \e[1;35mType:\e[0;0m                     $os_type"
+	color "    \e[1;35mName:\e[0;0m                     $os_name"
+	color "    \e[1;35mVersion:\e[0;0m              $os_version"
+	color "    \e[1;35mArchitecture:\e[0;0m     $os_arch\n"
 	
 	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch"
 	
