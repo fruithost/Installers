@@ -486,8 +486,16 @@ set -efu
 		color "\e[32m[OK]\e[39m WebServer"
 		service mariadb restart
 		color "\e[32m[OK]\e[39m MySQL-Database"
-		service proftpd restart
-		color "\e[32m[OK]\e[39m FTP-Service"
+		
+		# Start FTP
+		service proftpd restart || ftp_failed=1
+		if [ ${ftp_failed:-0} -eq 1 ]
+		then
+			color "\e[31m[ERROR]\e[39m FTP-Service"
+		else
+			color "\e[32m[OK]\e[39m FTP-Service"
+		fi
+		
 		service "php$PHP_VERSION-fpm" start
 		color "\e[32m[OK]\e[39m PHP-FPM"
 	}
