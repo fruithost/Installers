@@ -81,12 +81,6 @@ set -efu
 	  exit
 	fi
 	
-	read -p "Do you want to install fruithost on your system? (y/n): " go;
-	if [ "$go" != 'y' ]; then
-		error "You have cancel the installation.                                "
-		exit;
-	fi
-	
 	color "\e[33mDetecting OS,..."
 	detect_os
 	
