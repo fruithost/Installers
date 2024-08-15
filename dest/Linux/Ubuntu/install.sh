@@ -363,6 +363,11 @@ set -efu
 
 		# Set Hostname to ServerName my.fruit.host in /etc/fruithost/config/apache2/panel.conf
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/fruithost/config/apache2/panel.conf
+		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/apache2/sites-available/panel.conf
+		
+		if echo $(cat /etc/apache2/sites-available/panel.conf) | grep -q "\$hostname"; then
+			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-available/panel.conf"
+		fi
 		
 		if echo $(cat /etc/fruithost/config/apache2/panel.conf) | grep -q "\$hostname"; then
 			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-available/panel.conf"
@@ -450,7 +455,7 @@ set -efu
 		
 		color "\e[36mSet the system hostname..."
 		read -p $'Hostname: ' host;
-		set_hostname "$host"
+		set_hostname $host
 
 		color "\e[36mInstall Network-Tools..."
 		install_net_tools
