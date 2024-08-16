@@ -369,6 +369,7 @@ set -efu
 		[ ! -f "/etc/apache2/sites-available/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
 
 		# Set Hostname to ServerName my.fruit.host in /etc/fruithost/config/apache2/panel.conf
+		# @ToDo Debug $ Check if hostname correctly set!
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/fruithost/config/apache2/panel.conf
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/apache2/sites-available/panel.conf
 		
@@ -461,8 +462,8 @@ set -efu
 		add_user
 		
 		color "\e[36mSet the system hostname..."
-		read -p $'Hostname: ' host;
-		set_hostname $host
+		read -p $'Hostname: ' HOSTNAME;
+		set_hostname $HOSTNAME
 
 		color "\e[36mInstall Network-Tools..."
 		install_net_tools
