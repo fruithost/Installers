@@ -172,6 +172,8 @@ set -efu
 		ftp_works=("noble" "jammy")
 		if [[ ${ftp_works[*]} =~ (^|[[:space:]])"$UBUNTU_CODENAME"($|[[:space:]]) ]]; then
 			apt -y install proftpd-mod-crypto proftpd-mod-wrap
+		
+		# WORKS NOT: focal
 		else
 			color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
 			error "Missing ProFTPD-Mods: proftpd-mod-crypto, proftpd-mod-wrap";
