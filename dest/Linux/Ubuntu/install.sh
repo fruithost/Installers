@@ -28,6 +28,9 @@ set -efu
 	}
 	
 	packetmanager_update() {
+		color "Fetching system informations." 
+		. /etc/os-release
+		
 		apt update
 		apt upgrade
 		apt dist-upgrade
@@ -81,10 +84,7 @@ set -efu
 	}
 
 	# Adding MariaDB Repository
-	install_mysql() {
-		color "Fetching system informations." 
-		. /etc/os-release
-		
+	install_mysql() {		
 		[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
 		
 		color "Getting keyring for signed packages." 
@@ -167,8 +167,14 @@ set -efu
 
 	install_proftp() {
 		apt -y install proftpd proftpd-mod-mysql
-		#apt -y install proftpd-mod-crypto proftpd-mod-wrap
-		color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
+		
+		# @ToDo These ProFTP-Mods not available at all!
+		if [ "$UBUNTU_CODENAME" = "jammy" ]; then
+			apt -y install proftpd-mod-crypto proftpd-mod-wrap
+		else
+			color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
+			error "Missing ProFTPD-Mods: proftpd-mod-crypto, proftpd-mod-wrap";
+		fi
 		
 		if [ $(getent group ftpd) ]; then
 			color "\e[1;33m[WARN]\e[0;39m The group ftpd already exists, skipping."
