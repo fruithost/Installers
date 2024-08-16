@@ -168,12 +168,17 @@ set -efu
 	install_proftp() {
 		apt -y install proftpd proftpd-mod-mysql
 		
-		# @ToDo These ProFTP-Mods not available at all!
+		# Check if ProFTPD-Modules exists!
+		
+		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
+		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
+		
+		# ERROR:	 focal, 20.04.6 LTS (Focal Fossa)
+		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
+		
 		ftp_works=("noble" "jammy")
 		if [[ ${ftp_works[*]} =~ (^|[[:space:]])"$UBUNTU_CODENAME"($|[[:space:]]) ]]; then
 			apt -y install proftpd-mod-crypto proftpd-mod-wrap
-		
-		# WORKS NOT: focal
 		else
 			color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
 			error "Missing ProFTPD-Mods: proftpd-mod-crypto, proftpd-mod-wrap";
