@@ -169,7 +169,8 @@ set -efu
 		apt -y install proftpd proftpd-mod-mysql
 		
 		# @ToDo These ProFTP-Mods not available at all!
-		if [ "$UBUNTU_CODENAME" = "jammy" ]; then
+		ftp_works=("noble" "jammy")
+		if [[ ${ftp_works[*]} =~ (^|[[:space:]])"$UBUNTU_CODENAME"($|[[:space:]]) ]]; then
 			apt -y install proftpd-mod-crypto proftpd-mod-wrap
 		else
 			color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
