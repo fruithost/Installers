@@ -472,7 +472,7 @@ set -efu
 		read -p $'Enable all fruithost Modules? (y/n): ' go;
 		if [ "$go" = 'y' ]; then
 			color "\e[36mEnable all Modules..."
-			fruithost install @
+			fruithost install @ --force
 			fruithost enable @
 		fi
 		
