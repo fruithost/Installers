@@ -66,7 +66,7 @@ set -efu
 		
 		if [ "$START_TYPE" = 'systemd' ]; then
 			hostnamectl set-hostname "$1"
-		end
+		fi
 		
 		
 		color "\e[32m[OK]\e[39m Hostname: $1"
