@@ -39,6 +39,10 @@ set -efu
 					os_name='Debian'
 					os_version=`head -1 /etc/debian_version`
 					os_code=$VERSION_CODENAME
+					
+					if [ "$os_version" = 'trixie/sid' ]; then
+						os_version = "13.0";
+					fi
 				fi
 				
 			# RedHat
