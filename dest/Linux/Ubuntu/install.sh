@@ -84,19 +84,36 @@ set -efu
 	}
 
 	# Adding MariaDB Repository
-	install_mysql() {		
-		[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
+	install_mysql() {
+		# Check if MariaDB exists!
 		
-		color "Getting keyring for signed packages." 
-		curl -s -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
+		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
+		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
+		# EXISTS:	 focal, 20.04.6 LTS (Focal Fossa)
 		
-		color "Adding MariaDB repository to the system." 
-		echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
 		
-		apt update
-		apt -y install mariadb-server
-		color "\e[32m[OK]\e[39m Installed:"
-		mariadb --version
+		ftp_works=("noble" "jammy" "focal")
+		if [[ ${ftp_works[*]} =~ (^|[[:space:]])"$UBUNTU_CODENAME"($|[[:space:]]) ]]; then
+			[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
+		
+			color "Getting keyring for signed packages." 
+			curl -s -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
+			
+			color "Adding MariaDB repository to the system." 
+			echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+			
+			apt update
+			apt -y install mariadb-server
+			color "\e[32m[OK]\e[39m Installed:"
+			mariadb --version
+		else
+			color "\e[1;33m[WARN]\e[0;39m MariaDB can't installed. Your Ubuntu-Version is too old. Trying to install manually."
+			apt update
+			apt -y install mariadb-server
+			color "\e[32m[OK]\e[39m Installed:"
+			mariadb --version
+		fi
 	}
 
 	install_php() {
