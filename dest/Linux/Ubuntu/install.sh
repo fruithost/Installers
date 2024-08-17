@@ -93,9 +93,9 @@ set -efu
 		
 		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
 		
-		ftp_works=("noble" "jammy" "focal")
+		mysql_works=("noble" "jammy" "focal")
 		
-		if printf '%s\0' "${ftp_works[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
+		if printf '%s\0' "${mysql_works[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
 			[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
 		
 			color "Getting keyring for signed packages." 
@@ -114,6 +114,19 @@ set -efu
 	}
 
 	install_php() {
+		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
+		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
+		# EXISTS:	 focal, 20.04.6 LTS (Focal Fossa)
+		
+		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
+		
+		php_exclude=("bionic")
+		
+		if printf '%s\0' "${php_exclude[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
+			color "\e[1;33m[WARN]\e[0;39m PHP $PHP_VERSION can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
+			PHP_VERSION=7.2
+		fi
+		
 		add-apt-repository -y ppa:ondrej/php
 		
 		apt -y install lsb-release apt-transport-https ca-certificates libz-dev 
