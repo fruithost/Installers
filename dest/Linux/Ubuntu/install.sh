@@ -94,7 +94,8 @@ set -efu
 		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
 		
 		ftp_works=("noble" "jammy" "focal")
-		if [[ ${ftp_works[*]} =~ (^|[[:space:]])"$UBUNTU_CODENAME"($|[[:space:]]) ]]; then
+		
+		if printf '%s\0' "${ftp_works[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
 			[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
 		
 			color "Getting keyring for signed packages." 
