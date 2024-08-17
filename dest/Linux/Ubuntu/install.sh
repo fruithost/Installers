@@ -476,6 +476,23 @@ set -efu
 			fruithost enable @
 		fi
 		
+		# Is Running WSL?
+		if [[ $(grep WSL /proc/version) ]]; then
+			color "\e[36mYou\'re Linux-Distribution running on Windows-Subsystem for Linux (WSL)."
+			read -p $'Do you wan\'t to add Autostart-Service? (y/n): ' autostart;
+			if [ "$autostart" = 'y' ]; then
+				color "\e[36mEnable Autostart-Services..."
+				
+				if [[ ! -f "/etc/wsl.conf" ]]; then
+					echo "[boot]\nsystemd = true\ncommand=\"/etc/rc\"\n" > "/etc/wsl.conf"
+				fi
+				
+				if [[ ! -f "/etc/rc" ]]; then
+					echo "#!/bin/sh\n# Start system services\nfor i in /etc/rc3.d/S*; do\n  if [ -x $i ]; then\n    $i start\n  fi\ndone\n\n# Run /etc/rc.local if it exists\nif [ -x /etc/rc.local ] ; then\n  /etc/rc.local\nfi" > "/etc/rc"
+				fi				
+			fi
+		fi
+		
 		color "\n\e[90m\033[47m\e[K"
 		color "\e[1;90m\033[1;47m\e[K  Setup was finished!"
 		color "\e[1;90m\033[47m\e[K  The Admin-Account was created. You can now login to:\n\e[K"
