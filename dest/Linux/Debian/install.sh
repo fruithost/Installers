@@ -28,6 +28,9 @@ set -efu
 	}
 	
 	packetmanager_update() {
+		color "Fetching system informations." 
+		. /etc/os-release
+		
 		apt update
 		apt upgrade
 		apt dist-upgrade
@@ -58,7 +61,14 @@ set -efu
 	set_hostname() {
 		hostname $1
 		echo "127.0.0.1      $1" >> /etc/hosts
-		hostnamectl set-hostname "$1"
+		
+		START_TYPE=$(ps --no-headers -o comm 1)
+		
+		if [ "$START_TYPE" = 'systemd' ]; then
+			hostnamectl set-hostname "$1"
+		end
+		
+		
 		color "\e[32m[OK]\e[39m Hostname: $1"
 	}
 
@@ -82,17 +92,27 @@ set -efu
 
 	# Adding MariaDB Repository
 	install_mysql() {
-		color "Fetching system informations." 
-		DEBIAN_CODENAME=$(cat /etc/os-release | grep -Po 'VERSION="[0-9]+ \(\K[^)]+')
-		DEBIAN_VERSION=$(cat /etc/debian_version)
+		# Check if MariaDB exists!
 		
-		[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
+		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
+		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
+		# EXISTS:	 focal, 20.04.6 LTS (Focal Fossa)
 		
-		color "Getting keyring for signed packages." 
-		curl -s -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
+		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
 		
-		color "Adding MariaDB repository to the system." 
-		echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/debian $DEBIAN_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+		mysql_works=("noble" "jammy" "focal")
+		
+		if printf '%s\0' "${mysql_works[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
+			[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
+		
+			color "Getting keyring for signed packages." 
+			curl -s -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
+			
+			color "Adding MariaDB repository to the system." 
+			echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+		else
+			color "\e[1;33m[WARN]\e[0;39m MariaDB can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
+		fi
 		
 		apt update
 		apt -y install mariadb-server
@@ -101,7 +121,20 @@ set -efu
 	}
 
 	install_php() {
-		add-apt-repository -y ppa:ondrej/php
+		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
+		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
+		# EXISTS:	 focal, 20.04.6 LTS (Focal Fossa)
+		
+		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
+		
+		php_exclude=("bionic")
+		
+		if printf '%s\0' "${php_exclude[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
+			color "\e[1;33m[WARN]\e[0;39m PHP $PHP_VERSION can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
+			PHP_VERSION=7.2
+		else
+			add-apt-repository -y ppa:ondrej/php
+		fi
 		
 		apt -y install lsb-release apt-transport-https ca-certificates libz-dev 
 		apt update
@@ -168,8 +201,22 @@ set -efu
 
 	install_proftp() {
 		apt -y install proftpd proftpd-mod-mysql
-		apt -y install proftpd-mod-crypto proftpd-mod-wrap
-		color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
+		
+		# Check if ProFTPD-Modules exists!
+		
+		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
+		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
+		
+		# ERROR:	 focal, 20.04.6 LTS (Focal Fossa)
+		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
+		
+		ftp_works=("noble" "jammy")
+		if [[ ${ftp_works[*]} =~ (^|[[:space:]])"$UBUNTU_CODENAME"($|[[:space:]]) ]]; then
+			apt -y install proftpd-mod-crypto proftpd-mod-wrap
+		else
+			color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
+			error "Missing ProFTPD-Mods: proftpd-mod-crypto, proftpd-mod-wrap";
+		fi
 		
 		if [ $(getent group ftpd) ]; then
 			color "\e[1;33m[WARN]\e[0;39m The group ftpd already exists, skipping."
@@ -363,6 +410,7 @@ set -efu
 		[ ! -f "/etc/apache2/sites-available/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
 
 		# Set Hostname to ServerName my.fruit.host in /etc/fruithost/config/apache2/panel.conf
+		# @ToDo Debug $ Check if hostname correctly set!
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/fruithost/config/apache2/panel.conf
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/apache2/sites-available/panel.conf
 		
@@ -455,8 +503,8 @@ set -efu
 		add_user
 		
 		color "\e[36mSet the system hostname..."
-		read -p $'Hostname: ' host;
-		set_hostname $host
+		read -p $'Hostname: ' HOSTNAME;
+		set_hostname $HOSTNAME
 
 		color "\e[36mInstall Network-Tools..."
 		install_net_tools
