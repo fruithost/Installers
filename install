@@ -35,23 +35,12 @@ set -efu
 					os_version=$DISTRIB_RELEASE
 					os_code=$DISTRIB_CODENAME
 				else
+					. /etc/os-release
 					os_name='Debian'
 					os_version=`head -1 /etc/debian_version`
-					os_code="?"
+					os_code=$VERSION_CODENAME
 				fi
 				
-				case $os_name in
-					Debian)
-						os_version=`echo "$os_version" | grep -o "^[0-9]\+"`
-						[ -z "$os_version" ] || os_version="$os_version.0"
-						;;
-					Ubuntu)
-						;;
-					*)
-						error "Unknown OS is specified in /etc/lsb-release!"
-						;;
-				esac
-			
 			# RedHat
 			elif [ -e '/etc/redhat-release' ]; then
 				os_name=`awk '{print $1}' /etc/redhat-release`
