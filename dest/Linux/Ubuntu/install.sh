@@ -125,9 +125,9 @@ set -efu
 		if printf '%s\0' "${php_exclude[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
 			color "\e[1;33m[WARN]\e[0;39m PHP $PHP_VERSION can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
 			PHP_VERSION=7.2
+		else
+			add-apt-repository -y ppa:ondrej/php
 		fi
-		
-		add-apt-repository -y ppa:ondrej/php
 		
 		apt -y install lsb-release apt-transport-https ca-certificates libz-dev 
 		apt update
