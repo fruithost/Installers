@@ -33,9 +33,11 @@ set -efu
 					. /etc/lsb-release
 					os_name=$DISTRIB_ID
 					os_version=$DISTRIB_RELEASE
+					os_code=$DISTRIB_CODENAME
 				else
 					os_name='Debian'
 					os_version=`head -1 /etc/debian_version`
+					os_code="?"
 				fi
 				
 				case $os_name in
@@ -54,7 +56,8 @@ set -efu
 			elif [ -e '/etc/redhat-release' ]; then
 				os_name=`awk '{print $1}' /etc/redhat-release`
 				os_version=`head -1 /etc/redhat-release | sed -e 's/[^0-9.]*\([0-9.]*\).*/\1/g' | awk -F'.' '{print $1}'`
-				
+				os_code="?"
+					
 				case $os_name$os_version$os_arch in
 					CentOS*|Cloud*|Virtuozzo*|AlmaLinux*|Rocky*)
 						;;
@@ -88,6 +91,7 @@ set -efu
 	color "    \e[1;35mName:\e[0;0m             $os_name"
 	color "    \e[1;35mVersion:\e[0;0m          $os_version"
 	color "    \e[1;35mArchitecture:\e[0;0m     $os_arch\n"
+	color "    \e[1;35mCodename:\e[0;0m         $os_code\n"
 	
 	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch"
 	
