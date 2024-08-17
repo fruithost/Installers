@@ -102,18 +102,14 @@ set -efu
 			
 			color "Adding MariaDB repository to the system." 
 			echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
-			
-			apt update
-			apt -y install mariadb-server
-			color "\e[32m[OK]\e[39m Installed:"
-			mariadb --version
 		else
-			color "\e[1;33m[WARN]\e[0;39m MariaDB can't installed. Your Ubuntu-Version is too old. Trying to install manually."
-			apt update
-			apt -y install mariadb-server
-			color "\e[32m[OK]\e[39m Installed:"
-			mariadb --version
+			color "\e[1;33m[WARN]\e[0;39m MariaDB can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
 		fi
+		
+		apt update
+		apt -y install mariadb-server
+		color "\e[32m[OK]\e[39m Installed:"
+		mariadb --version
 	}
 
 	install_php() {
