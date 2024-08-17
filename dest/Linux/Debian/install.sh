@@ -6,7 +6,7 @@ set -efu
 	USERNAME=fruithost
 	USER_GROUP=fruithost
 	USER_ID=1010
-	PHP_VERSION=8.4
+	PHP_VERSION=8.2
 	PHP_MODULES=("dev" "pear" "xdebug" "bcmath" "bz2" "uploadprogress" "cli" "curl" "dba" "fpm" "gd" "gmp" "imap" "interbase" "intl" "ldap" "mbstring" "mysql" "odbc" "pgsql" "snmp" "soap" "sqlite3" "sybase" "xmlrpc" "xsl" "zip")
 	APACHE_MODS=("proxy_fcgi" "setenvif" "headers" "actions" "fastcgi" "alias" "ssl" "rewrite")
 	MARIADB_VERSION=11.4
@@ -34,7 +34,8 @@ set -efu
 		apt update
 		apt upgrade
 		apt dist-upgrade
-		apt -y install dnsutils git tzdata tzdata jq
+		apt -y install dnsutils git tzdata tzdata jq 
+		apt -y install software-properties-common python3-launchpadlib
 		apt -y install sudo vim make zip unzip bash-completion curl dbus apt-transport-https
 		export DEBIAN_FRONTEND=noninteractive
 		color "\e[32m[OK]\e[39m Update complete"
@@ -80,11 +81,6 @@ set -efu
 
 	# Webserver
 	install_webserver() {
-		add-apt-repository -y ppa:ondrej/apache2
-		
-		apt update
-		apt upgrade
-		
 		apt -y install apache2
 		color "\e[32m[OK]\e[39m Installed:"
 		apache2 -v
@@ -92,28 +88,14 @@ set -efu
 
 	# Adding MariaDB Repository
 	install_mysql() {
-		# Check if MariaDB exists!
+		[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
+	
+		color "Getting keyring for signed packages." 
+		curl -s -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
 		
-		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
-		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
-		# EXISTS:	 focal, 20.04.6 LTS (Focal Fossa)
-		
-		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
-		
-		mysql_works=("noble" "jammy" "focal")
-		
-		if printf '%s\0' "${mysql_works[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
-			[ ! -d "/etc/apt/keyrings" ] && mkdir -p /etc/apt/keyrings
-		
-			color "Getting keyring for signed packages." 
-			curl -s -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
-			
-			color "Adding MariaDB repository to the system." 
-			echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
-		else
-			color "\e[1;33m[WARN]\e[0;39m MariaDB can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
-		fi
-		
+		color "Adding MariaDB repository to the system." 
+		echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+
 		apt update
 		apt -y install mariadb-server
 		color "\e[32m[OK]\e[39m Installed:"
@@ -121,21 +103,6 @@ set -efu
 	}
 
 	install_php() {
-		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
-		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
-		# EXISTS:	 focal, 20.04.6 LTS (Focal Fossa)
-		
-		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
-		
-		php_exclude=("bionic")
-		
-		if printf '%s\0' "${php_exclude[@]}" | grep -Fxqz -- "$UBUNTU_CODENAME"; then
-			color "\e[1;33m[WARN]\e[0;39m PHP $PHP_VERSION can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
-			PHP_VERSION=7.2
-		else
-			add-apt-repository -y ppa:ondrej/php
-		fi
-		
 		apt -y install lsb-release apt-transport-https ca-certificates libz-dev 
 		apt update
 		apt upgrade
@@ -201,22 +168,7 @@ set -efu
 
 	install_proftp() {
 		apt -y install proftpd proftpd-mod-mysql
-		
-		# Check if ProFTPD-Modules exists!
-		
-		# EXISTS:	 noble, 24.04 LTS (Noble Numbat)
-		# EXISTS:	 jammy, 22.04.4 LTS (Jammy Jellyfish)
-		
-		# ERROR:	 focal, 20.04.6 LTS (Focal Fossa)
-		# ERROR:	 bionic, 18.04.6 LTS (Bionic Beaver)
-		
-		ftp_works=("noble" "jammy")
-		if [[ ${ftp_works[*]} =~ (^|[[:space:]])"$UBUNTU_CODENAME"($|[[:space:]]) ]]; then
-			apt -y install proftpd-mod-crypto proftpd-mod-wrap
-		else
-			color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
-			error "Missing ProFTPD-Mods: proftpd-mod-crypto, proftpd-mod-wrap";
-		fi
+		apt -y install proftpd-mod-crypto proftpd-mod-wrap
 		
 		if [ $(getent group ftpd) ]; then
 			color "\e[1;33m[WARN]\e[0;39m The group ftpd already exists, skipping."
