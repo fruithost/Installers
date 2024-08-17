@@ -478,17 +478,17 @@ set -efu
 		
 		# Is Running WSL?
 		if [[ $(grep WSL /proc/version) ]]; then
-			color "\e[36mYou\'re Linux-Distribution running on Windows-Subsystem for Linux (WSL)."
+			color "\e[36mYou're Linux-Distribution running on Windows-Subsystem for Linux (WSL)."
 			read -p $'Do you wan\'t to add Autostart-Service? (y/n): ' autostart;
 			if [ "$autostart" = 'y' ]; then
 				color "\e[36mEnable Autostart-Services..."
 				
 				if [[ ! -f "/etc/wsl.conf" ]]; then
-					echo "[boot]\nsystemd = true\ncommand=\"/etc/rc\"\n" > "/etc/wsl.conf"
+					echo -e "[boot]\nsystemd = true\ncommand=\"/etc/rc\"\n" > "/etc/wsl.conf"
 				fi
 				
 				if [[ ! -f "/etc/rc" ]]; then
-					echo "#!/bin/sh\n# Start system services\nfor i in /etc/rc3.d/S*; do\n  if [ -x $i ]; then\n    $i start\n  fi\ndone\n\n# Run /etc/rc.local if it exists\nif [ -x /etc/rc.local ] ; then\n  /etc/rc.local\nfi" > "/etc/rc"
+					echo -e "#!/bin/sh\n# Start system services\nfor i in /etc/rc3.d/S*; do\n  if [ -x $i ]; then\n    $i start\n  fi\ndone\n\n# Run /etc/rc.local if it exists\nif [ -x /etc/rc.local ] ; then\n  /etc/rc.local\nfi" > "/etc/rc"
 				fi				
 			fi
 		fi
