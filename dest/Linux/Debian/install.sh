@@ -310,6 +310,7 @@ set -efu
 		echo "" >> /etc/fruithost/.config.php
 		echo "	# Paths" >> /etc/fruithost/.config.php
 		echo "	define('HOST_PATH',			'/var/fruithost/users/');" >> /etc/fruithost/.config.php
+		echo "	define('CONFIG_PATH',			'/var/fruithost/config/');" >> /etc/fruithost/.config.php
 		echo "	define('LOG_PATH',			'/var/fruithost/logs/');" >> /etc/fruithost/.config.php
 		echo "?>" >> /etc/fruithost/.config.php
 
