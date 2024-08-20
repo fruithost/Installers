@@ -337,7 +337,8 @@ set -efu
 		fi
 		
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="CREATE USER fruithost@localhost IDENTIFIED BY '${mysql_password}';"
-		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="GRANT ALL PRIVILEGES ON fruithost.* TO 'fruithost'@'localhost';"
+		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="GRANT ALL PRIVILEGES ON fruithost.* TO 'fruithost'@'localhost' WITH GRANT OPTION;"
+		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="GRANT ALL PRIVILEGES ON mysql.* TO 'fruithost'@'localhost' WITH GRANT OPTION;"
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="FLUSH PRIVILEGES;"
 		
 		mysql_salt=$(password_generate)
@@ -359,6 +360,7 @@ set -efu
 		admin_password=$(password_generate)
 		
 		# Apache2
+  		# @ToDo Check Symlink!
 		[ ! -f "/etc/apache2/sites-available/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-available/global.conf
 		[ ! -f "/etc/apache2/sites-available/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
 
