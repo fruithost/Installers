@@ -378,7 +378,8 @@ set -efu
 		fi
 		
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="CREATE USER fruithost@localhost IDENTIFIED BY '${mysql_password}';"
-		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="GRANT ALL PRIVILEGES ON fruithost.* TO 'fruithost'@'localhost';"
+		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="GRANT ALL PRIVILEGES ON fruithost.* TO 'fruithost'@'localhost' WITH GRANT OPTION;"
+		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="GRANT ALL PRIVILEGES ON mysql.* TO 'fruithost'@'localhost' WITH GRANT OPTION;"
 		mariadb --socket=/run/mysqld/mysqld.sock --silent --execute="FLUSH PRIVILEGES;"
 		
 		mysql_salt=$(password_generate)
