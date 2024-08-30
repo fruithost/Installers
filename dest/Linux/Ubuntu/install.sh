@@ -461,12 +461,7 @@ set -efu
 		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users VALUES ('1', 'admin', UPPER(SHA2(CONCAT('1', '${mysql_salt}', '${admin_password}'), 512)), 'admin@localhost', 'NO', null, null, 'NO');"
 		
 		# Set Permissions
-		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'USERS::VIEW');"
-		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'MODULES::VIEW');"
-		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'THEMES::VIEW');"
-		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'LOGFILES::VIEW');"
-		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'SERVER::VIEW');"
-		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', 'SERVER::MANAGE');"
+		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', '*');"
 		
 		mariadb --socket=/run/mysqld/mysqld.sock --execute="FLUSH PRIVILEGES;"
 	 	
