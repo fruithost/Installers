@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -efu
+set -o errexit
 
 { # this ensures the entire script is downloaded #
 ## Configuration ##
@@ -61,7 +62,14 @@ set -efu
 	set_hostname() {
 		hostname $1
 		echo "127.0.0.1      $1" >> /etc/hosts
-		hostnamectl set-hostname "$1"
+		
+		START_TYPE=$(ps --no-headers -o comm 1)
+		
+		if [ "$START_TYPE" = 'systemd' ]; then
+			hostnamectl set-hostname "$1"
+		fi
+		
+		
 		color "\e[32m[OK]\e[39m Hostname: $1"
 	}
 
@@ -165,7 +173,12 @@ set -efu
 	}
 
 	install_apache2_mods() {
-		a2enconf "php$PHP_VERSION-fpm"
+		# protected dirs for apache2
+		apt -y install apache2-utils libaprutil1 libaprutil1-dbd-mysql
+		apt -y install libapache2-mod-authnz-external
+		
+		# Security & name resolving for apache2 
+		apt -y install nscd libapache2-mpm-itk
 		
 		for i in ${!APACHE_MODS[@]};
 		do
@@ -183,11 +196,9 @@ set -efu
 			fi
 		done
 		
+		a2disconf "php$PHP_VERSION-fpm"
 		a2dismod "php$PHP_VERSION"
 		
-		# protected dirs for apache2
-		apt -y install apache2-utils libaprutil1 libaprutil1-dbd-mysql
-		apt -y install libapache2-mod-authnz-external
 		service apache2 restart
 		echo "OK"
 	}
@@ -281,6 +292,8 @@ set -efu
 
 		# PHP
 		[ -f "/etc/php/$PHP_VERSION/fpm/php.ini" ] && rm "/etc/php/$PHP_VERSION/fpm/php.ini"
+		[ -f "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
+		[ -f "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
 	 
 		# Configurations
 		[ -f "/etc/fruithost/.config.php" ] && rm /etc/fruithost/.config.php
@@ -328,8 +341,8 @@ set -efu
 		
 		# Adding global scripts
 		color "\e[36mRegistering global Scripts..."
-		[ ! -f "/usr/bin/fruithost" ] && ln -s /etc/fruithost/bin/fruithost.sh /usr/bin/fruithost
-		[ ! -f "/usr/local/bin/fruithost" ] && ln -s /etc/fruithost/bin/fruithost.sh /usr/local/bin/fruithost
+		[ ! -L "/usr/bin/fruithost" ] && ln -s /etc/fruithost/bin/fruithost.sh /usr/bin/fruithost
+		[ ! -L "/usr/local/bin/fruithost" ] && ln -s /etc/fruithost/bin/fruithost.sh /usr/local/bin/fruithost
 
 		# Adding Crontabs
 		crontab /etc/fruithost/bin/cronjob
@@ -401,8 +414,9 @@ set -efu
 		admin_password=$(password_generate)
 		
 		# Apache2
-		[ ! -f "/etc/apache2/sites-available/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-available/global.conf
-		[ ! -f "/etc/apache2/sites-available/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
+  		# @ToDo Check Symlink!
+		[ ! -L "/etc/apache2/sites-available/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-available/global.conf
+		[ ! -L "/etc/apache2/sites-available/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
 
 		# Set Hostname to ServerName my.fruit.host in /etc/fruithost/config/apache2/panel.conf
 		# @ToDo Debug $ Check if hostname correctly set!
@@ -422,13 +436,15 @@ set -efu
 		service apache2 reload
 
 		# PHP
-		[ ! -f "/etc/php/$PHP_VERSION/fpm/php.ini" ] && ln -s /etc/fruithost/config/php/php.ini "/etc/php/$PHP_VERSION/fpm/php.ini"
+		[ ! -L "/etc/php/$PHP_VERSION/fpm/php.ini" ] && ln -s /etc/fruithost/config/php/php.ini "/etc/php/$PHP_VERSION/fpm/php.ini"
+		[ ! -L "/etc/fruithost/config/php/users/panel.conf" ] && ln -s /etc/fruithost/config/php/panel.conf /etc/fruithost/config/php/users/panel.conf
+		[ ! -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && ln -s /etc/fruithost/config/php/global.conf /etc/php/8.2/fpm/php-fpm.conf
 		service "php$PHP_VERSION-fpm" restart
 	 
 		# FTP
-		[ ! -f "/etc/proftpd/modules.conf" ] && ln -s /etc/fruithost/config/ftp/modules.conf /etc/proftpd/modules.conf
-		[ ! -f "/etc/proftpd/proftpd.conf" ] && ln -s /etc/fruithost/config/ftp/proftpd.conf /etc/proftpd/proftpd.conf
-		[ ! -f "/etc/proftpd/sql.conf" ] && ln -s /etc/fruithost/config/ftp/sql.conf /etc/proftpd/sql.conf
+		[ ! -L "/etc/proftpd/modules.conf" ] && ln -s /etc/fruithost/config/ftp/modules.conf /etc/proftpd/modules.conf
+		[ ! -L "/etc/proftpd/proftpd.conf" ] && ln -s /etc/fruithost/config/ftp/proftpd.conf /etc/proftpd/proftpd.conf
+		[ ! -L "/etc/proftpd/sql.conf" ] && ln -s /etc/fruithost/config/ftp/sql.conf /etc/proftpd/sql.conf
 		service proftpd reload
 	   
 		create_config
@@ -472,7 +488,7 @@ set -efu
 			fruithost install @ --force
 			fruithost enable @
 		fi
-		
+
 		# Is Running WSL?
 		if [[ $(grep WSL /proc/version) ]]; then
 			color "\e[36mYou're Linux-Distribution running on Windows-Subsystem for Linux (WSL)."
@@ -489,7 +505,7 @@ set -efu
 				fi				
 			fi
 		fi
-		
+
 		color "\n\e[90m\033[47m\e[K"
 		color "\e[1;90m\033[1;47m\e[K  Setup was finished!"
 		color "\e[1;90m\033[47m\e[K  The Admin-Account was created. You can now login to:\n\e[K"
@@ -587,7 +603,7 @@ set -efu
 		error "You have cancel the installation."
 		exit;
 	fi
-	
+
 	install_software
 	
 	## Grab latest version fruithost files
