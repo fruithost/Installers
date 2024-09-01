@@ -28,17 +28,27 @@ set -o errexit
 		type "$1" > /dev/null 2>&1
 	}
 	
+	packet() {
+		args="$@"
+		color "\e[36mInstalling Packets:\e[39m $args"
+		export DEBIAN_FRONTEND=noninteractive
+		apt -y -qqq install $@
+		export DEBIAN_FRONTEND=dialog
+	}
+	
 	packetmanager_update() {
 		color "Fetching system informations." 
 		. /etc/os-release
 		
-		apt update
-		apt upgrade
-		apt dist-upgrade
-		apt -y install dnsutils git tzdata tzdata jq 
-		apt -y install software-properties-common python3-launchpadlib
-		apt -y install sudo vim make zip unzip bash-completion curl dbus apt-transport-https
-		export DEBIAN_FRONTEND=noninteractive
+		color "\e[36mUpdating Packetmanager..."
+		apt -qqq update
+		apt -qqq upgrade
+		apt -qqq dist-upgrade
+		
+		packet dnsutils git tzdata tzdata jq
+		packet software-properties-common python3-launchpadlib
+		packet sudo vim make zip unzip bash-completion curl dbus apt-transport-https
+		
 		color "\e[32m[OK]\e[39m Update complete"
 	}
 
@@ -70,19 +80,22 @@ set -o errexit
 			hostnamectl set-hostname "$1"
 		fi
 		
-		
 		color "\e[32m[OK]\e[39m Hostname: $1"
 	}
 
 	# Install Network-Tools
 	install_net_tools() {
-		apt -y install lshw
+		packet lshw
 		color "\e[32m[OK]\e[39m Installed."
 	}
 
 	# Webserver
 	install_webserver() {
-		apt -y install apache2
+		add-apt-repository -y ppa:ondrej/apache2 > /dev/null 2>&1
+		
+		apt -qqq update
+		
+		packet apache2
 		color "\e[32m[OK]\e[39m Installed:"
 		apache2 -v
 	}
@@ -97,17 +110,16 @@ set -o errexit
 		color "Adding MariaDB repository to the system." 
 		echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.23m.com/mariadb/repo/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
 
-		apt update
-		apt -y install mariadb-server
+		apt -qqq update
+		packet mariadb-server
 		color "\e[32m[OK]\e[39m Installed:"
 		mariadb --version
 	}
 
 	install_php() {
-		apt -y install lsb-release apt-transport-https ca-certificates libz-dev 
-		apt update
-		apt upgrade
-		apt -y install "php$PHP_VERSION"
+		packet lsb-release apt-transport-https ca-certificates libz-dev 
+		apt -qqq update
+		packet "php$PHP_VERSION"
 		
 		for i in ${!PHP_MODULES[@]};
 		do
@@ -118,10 +130,10 @@ set -o errexit
 					if [ "$(apt-cache search --names-only "php-$PHP_MODULE")" = "" ]; then
 						color "\e[1;33m[WARN]\e[0;39m The PHP-Module $PHP_MODULE not exists, skipping!"
 					else
-						apt -y install "php-$PHP_MODULE"
+						packet "php-$PHP_MODULE"
 					fi
 				else
-					apt -y install "php$PHP_VERSION-$PHP_MODULE"
+					packet "php$PHP_VERSION-$PHP_MODULE"
 				fi
 			else
 				color "\e[1;33m[WARN]\e[0;39m The PHP-Module $PHP_MODULE already installed, skipping!"
@@ -141,11 +153,11 @@ set -o errexit
 
 	install_apache2_mods() {
 		# protected dirs for apache2
-		apt -y install apache2-utils libaprutil1 libaprutil1-dbd-mysql
-		apt -y install libapache2-mod-authnz-external
+		packet apache2-utils libaprutil1 libaprutil1-dbd-mysql
+		packet libapache2-mod-authnz-external
 		
 		# Security & name resolving for apache2 
-		apt -y install nscd libapache2-mpm-itk
+		packet nscd libapache2-mpm-itk
 		
 		for i in ${!APACHE_MODS[@]};
 		do
@@ -171,8 +183,8 @@ set -o errexit
 	}
 
 	install_proftp() {
-		apt -y install proftpd proftpd-mod-mysql
-		apt -y install proftpd-mod-crypto proftpd-mod-wrap
+		packet proftpd proftpd-mod-mysql
+		packet proftpd-mod-crypto proftpd-mod-wrap
 		
 		if [ $(getent group ftpd) ]; then
 			color "\e[1;33m[WARN]\e[0;39m The group ftpd already exists, skipping."
@@ -194,7 +206,7 @@ set -o errexit
 
 	install_rsyslog() {
 		# RSyslog
-		apt -y install rsyslog rsyslog-mysql 
+		packet rsyslog rsyslog-mysql 
 	}
 
 	create_directorys() {
@@ -232,20 +244,24 @@ set -o errexit
 		[ -d "/etc/fruithost/modules" ] && rm -rf /etc/fruithost/modules
 
 		# Webserver
-		[ -f "/etc/apache2/sites-enabled/global.conf" ] && rm /etc/apache2/sites-enabled/global.conf
-		[ -f "/etc/apache2/sites-enabled/panel.conf" ] && rm /etc/apache2/sites-enabled/panel.conf
-		[ -f "/etc/apache2/sites-available/global.conf" ] && rm /etc/apache2/sites-available/global.conf
-		[ -f "/etc/apache2/sites-available/panel.conf" ] && rm /etc/apache2/sites-available/panel.conf
+		[ -L "/etc/apache2/sites-enabled/global.conf" ] && rm /etc/apache2/sites-enabled/global.conf
+		[ -L "/etc/apache2/sites-enabled/panel.conf" ] && rm /etc/apache2/sites-enabled/panel.conf
 
 		# FTP
+		[ -L "/etc/proftpd/modules.conf" ] && rm /etc/proftpd/modules.conf
 		[ -f "/etc/proftpd/modules.conf" ] && rm /etc/proftpd/modules.conf
+		[ -L "/etc/proftpd/proftpd.conf" ] && rm /etc/proftpd/proftpd.conf
 		[ -f "/etc/proftpd/proftpd.conf" ] && rm /etc/proftpd/proftpd.conf
+		[ -L "/etc/proftpd/sql.conf" ] && rm /etc/proftpd/sql.conf
 		[ -f "/etc/proftpd/sql.conf" ] && rm /etc/proftpd/sql.conf
-
+		
 		# PHP
 		[ -f "/etc/php/$PHP_VERSION/fpm/php.ini" ] && rm "/etc/php/$PHP_VERSION/fpm/php.ini"
-		[ -f "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
+		[ -L "/etc/php/$PHP_VERSION/fpm/php.ini" ] && rm "/etc/php/$PHP_VERSION/fpm/php.ini"
 		[ -f "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
+		[ -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
+		[ -f "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
+		[ -L "/etc/fruithost/config/php/users/panel.conf" ] && rm /etc/fruithost/config/php/users/panel.conf
 	 
 		# Configurations
 		[ -f "/etc/fruithost/.config.php" ] && rm /etc/fruithost/.config.php
@@ -261,25 +277,25 @@ set -o errexit
 	  
 		# Grab latest versions
 		color "\e[36mFetch Panel from fruithost..."
-		git clone https://github.com/fruithost/Panel.git /etc/fruithost/panel
+		git clone -q https://github.com/fruithost/Panel.git /etc/fruithost/panel
 		
 		color "\e[36mFetch Daemon from fruithost..."
-		git clone https://github.com/fruithost/Binary.git /etc/fruithost/bin
+		git clone -q https://github.com/fruithost/Binary.git /etc/fruithost/bin
 		
 		color "\e[36mFetch Default-Configuration from fruithost..."
-		git clone https://github.com/fruithost/Config.git /etc/fruithost/config
+		git clone -q https://github.com/fruithost/Config.git /etc/fruithost/config
 		
 		color "\e[36mFetch Themes from fruithost..."
-		git clone https://github.com/fruithost/Themes.git /etc/fruithost/themes
+		git clone -q https://github.com/fruithost/Themes.git /etc/fruithost/themes
 		
 		color "\e[36mFetch Placeholders from fruithost..."
-		git clone https://github.com/fruithost/Placeholder.git /etc/fruithost/placeholder
+		git clone -q https://github.com/fruithost/Placeholder.git /etc/fruithost/placeholder
 		
 		# Adding Modules Folder
 		read -p $'Do you want to download all available Modules for fruithost? (y/n): ' go;
 		if [ "$go" = 'y' ]; then
 			color "\e[36mFetch Modules from fruithost..."
-			git clone https://github.com/fruithost/Modules.git /etc/fruithost/modules
+			git clone -q https://github.com/fruithost/Modules.git /etc/fruithost/modules
 		else
 			color "\e[1;33m[WARN]\e[0;39m Skipping download Modules."
 			[ ! -d "/etc/fruithost/modules" ] && mkdir /etc/fruithost/modules
@@ -290,6 +306,8 @@ set -o errexit
 		chmod 0777 /etc/fruithost/bin/cli.php
 		chmod 0777 /etc/fruithost/bin/cronjob
 		chmod 0777 /etc/fruithost/bin/fruithost.sh
+		
+		[ ! -d "/etc/fruithost/config/php/users/" ] && mkdir /etc/fruithost/config/php/users/
 		
 		# Adding global scripts
 		color "\e[36mRegistering global Scripts..."
@@ -366,31 +384,31 @@ set -o errexit
 		admin_password=$(password_generate)
 		
 		# Apache2
-  		# @ToDo Check Symlink!
-		[ ! -L "/etc/apache2/sites-available/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-available/global.conf
-		[ ! -L "/etc/apache2/sites-available/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
+		[ ! -L "/etc/apache2/sites-enabled/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-enabled/global.conf
+		[ ! -L "/etc/apache2/sites-enabled/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-enabled/panel.conf
 
 		# Set Hostname to ServerName my.fruit.host in /etc/fruithost/config/apache2/panel.conf
 		# @ToDo Debug $ Check if hostname correctly set!
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/fruithost/config/apache2/panel.conf
-		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/apache2/sites-available/panel.conf
-		
-		if echo $(cat /etc/apache2/sites-available/panel.conf) | grep -q "\$hostname"; then
-			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-available/panel.conf"
-		fi
+		sed -i -e "s/\$phpversion/${PHP_VERSION}/g" /etc/fruithost/config/apache2/panel.conf
 		
 		if echo $(cat /etc/fruithost/config/apache2/panel.conf) | grep -q "\$hostname"; then
-			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-available/panel.conf"
+			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-enabled/panel.conf"
 		fi
 		
-		a2ensite global panel
-		a2dissite 000-default default-ssl
+		if echo $(cat /etc/fruithost/config/apache2/panel.conf) | grep -q "\$phpversion"; then
+			error "The PHP-Variable (Version) can't set. Please fix the variable \$phpversion to \"$PHP_VERSION\" it on following file:\n/etc/apache2/sites-enabled/panel.conf"
+		fi
+
+		#a2ensite global pane
+		[ -L "/etc/apache2/sites-enabled/000-default.conf" ] && (a2dissite 000-default)
+		[ -L "/etc/apache2/sites-enabled/default-ssl.conf" ] && (a2dissite default-ssl) 
 		service apache2 reload
 
 		# PHP
 		[ ! -L "/etc/php/$PHP_VERSION/fpm/php.ini" ] && ln -s /etc/fruithost/config/php/php.ini "/etc/php/$PHP_VERSION/fpm/php.ini"
 		[ ! -L "/etc/fruithost/config/php/users/panel.conf" ] && ln -s /etc/fruithost/config/php/panel.conf /etc/fruithost/config/php/users/panel.conf
-		[ ! -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && ln -s /etc/fruithost/config/php/global.conf /etc/php/8.2/fpm/php-fpm.conf
+		[ ! -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && ln -s /etc/fruithost/config/php/global.conf "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
 		service "php$PHP_VERSION-fpm" restart
 	 
 		# FTP
@@ -430,6 +448,7 @@ set -o errexit
 		
 		# Set Permissions
 		mariadb --socket=/run/mysqld/mysqld.sock --database="fruithost" --execute="INSERT INTO fh_users_permissions VALUES (null, '1', '*');"
+		
 		mariadb --socket=/run/mysqld/mysqld.sock --execute="FLUSH PRIVILEGES;"
 	 	
 		# Enable Modules?
