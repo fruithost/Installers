@@ -32,7 +32,9 @@ export DEBIAN_FRONTEND=noninteractive
 	packet() {
 		args="$@"
 		color "\e[36mInstalling Packets:\e[39m $args"
-		apt -yqq install $@ > /dev/null 2>&1
+		export DEBIAN_FRONTEND=noninteractive
+		apt -y -qqq install $@
+		export DEBIAN_FRONTEND=dialog
 	}
 	
 	packetmanager_update() {
@@ -40,9 +42,9 @@ export DEBIAN_FRONTEND=noninteractive
 		. /etc/os-release
 		
 		color "\e[36mUpdating Packetmanager..."
-		apt -qq update > /dev/null 2>&1
-		apt -qq upgrade > /dev/null 2>&1
-		apt -qq dist-upgrade > /dev/null 2>&1
+		apt -qqq update
+		apt -qqq upgrade
+		apt -qqq dist-upgrade
 		
 		packet dnsutils git tzdata tzdata jq
 		packet sudo vim make zip unzip bash-completion curl dbus apt-transport-https
@@ -91,7 +93,7 @@ export DEBIAN_FRONTEND=noninteractive
 	install_webserver() {
 		add-apt-repository -y ppa:ondrej/apache2 > /dev/null 2>&1
 		
-		apt -qq update > /dev/null 2>&1
+		apt -qqq update
 		
 		packet apache2
 		color "\e[32m[OK]\e[39m Installed:"
@@ -122,7 +124,7 @@ export DEBIAN_FRONTEND=noninteractive
 			color "\e[1;33m[WARN]\e[0;39m MariaDB can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
 		fi
 		
-		apt -qq update > /dev/null 2>&1
+		apt -qqq update
 		
 		packet mariadb-server
 		color "\e[32m[OK]\e[39m Installed:"
@@ -146,7 +148,7 @@ export DEBIAN_FRONTEND=noninteractive
 		fi
 		
 		packet lsb-release apt-transport-https ca-certificates libz-dev 
-		apt -qq update > /dev/null 2>&1
+		apt -qqq update
 		packet "php$PHP_VERSION"
 		
 		for i in ${!PHP_MODULES[@]};
@@ -292,13 +294,18 @@ export DEBIAN_FRONTEND=noninteractive
 
 		# FTP
 		[ -L "/etc/proftpd/modules.conf" ] && rm /etc/proftpd/modules.conf
+		[ -f "/etc/proftpd/modules.conf" ] && rm /etc/proftpd/modules.conf
 		[ -L "/etc/proftpd/proftpd.conf" ] && rm /etc/proftpd/proftpd.conf
+		[ -f "/etc/proftpd/proftpd.conf" ] && rm /etc/proftpd/proftpd.conf
 		[ -L "/etc/proftpd/sql.conf" ] && rm /etc/proftpd/sql.conf
-
+		[ -f "/etc/proftpd/sql.conf" ] && rm /etc/proftpd/sql.conf
+		
 		# PHP
+		[ -f "/etc/php/$PHP_VERSION/fpm/php.ini" ] && rm "/etc/php/$PHP_VERSION/fpm/php.ini"
 		[ -L "/etc/php/$PHP_VERSION/fpm/php.ini" ] && rm "/etc/php/$PHP_VERSION/fpm/php.ini"
+		[ -f "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
 		[ -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
-		[ -L "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
+		[ -f "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
 		[ -L "/etc/fruithost/config/php/users/panel.conf" ] && rm /etc/fruithost/config/php/users/panel.conf
 	 
 		# Configurations
@@ -344,7 +351,6 @@ export DEBIAN_FRONTEND=noninteractive
 		chmod 0777 /etc/fruithost/bin/cli.php
 		chmod 0777 /etc/fruithost/bin/cronjob
 		chmod 0777 /etc/fruithost/bin/fruithost.sh
-		
 		
 		[ ! -d "/etc/fruithost/config/php/users/" ] && mkdir /etc/fruithost/config/php/users/
 		
