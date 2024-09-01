@@ -88,6 +88,8 @@ set -efu
 	
 	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch"
 	
+	curl --connect-timeout 10 -IsL "$url" > /dev/null || ( error "Cannot connect to $url to download the fruithost-Installer.\n\nCheck your firewall settings. If you are using a proxy, make sure you have set the HTTPS_PROXY environment variable." && exit 132 )
+	
 	bash <(curl -H 'Cache-Control: no-cache, no-store' -L -s -o- $url || wget -q -O - $url)
 	
 } # this ensures the entire script is downloaded #
