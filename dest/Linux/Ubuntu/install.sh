@@ -431,7 +431,7 @@ set -o errexit
 		# PHP
 		[ ! -L "/etc/php/$PHP_VERSION/fpm/php.ini" ] && ln -s /etc/fruithost/config/php/php.ini "/etc/php/$PHP_VERSION/fpm/php.ini"
 		[ ! -L "/etc/fruithost/config/php/users/panel.conf" ] && ln -s /etc/fruithost/config/php/panel.conf /etc/fruithost/config/php/users/panel.conf
-		[ ! -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && ln -s /etc/fruithost/config/php/global.conf /etc/php/8.2/fpm/php-fpm.conf
+		[ ! -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && ln -s /etc/fruithost/config/php/global.conf "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
 		service "php$PHP_VERSION-fpm" restart
 	 
 		# FTP
