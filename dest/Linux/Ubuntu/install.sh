@@ -280,20 +280,18 @@ set -o errexit
 		[ -d "/etc/fruithost/modules" ] && rm -rf /etc/fruithost/modules
 
 		# Webserver
-		[ -f "/etc/apache2/sites-enabled/global.conf" ] && rm /etc/apache2/sites-enabled/global.conf
-		[ -f "/etc/apache2/sites-enabled/panel.conf" ] && rm /etc/apache2/sites-enabled/panel.conf
-		[ -f "/etc/apache2/sites-available/global.conf" ] && rm /etc/apache2/sites-available/global.conf
-		[ -f "/etc/apache2/sites-available/panel.conf" ] && rm /etc/apache2/sites-available/panel.conf
+		[ -L "/etc/apache2/sites-enabled/global.conf" ] && rm /etc/apache2/sites-enabled/global.conf
+		[ -L "/etc/apache2/sites-enabled/panel.conf" ] && rm /etc/apache2/sites-enabled/panel.conf
 
 		# FTP
-		[ -f "/etc/proftpd/modules.conf" ] && rm /etc/proftpd/modules.conf
-		[ -f "/etc/proftpd/proftpd.conf" ] && rm /etc/proftpd/proftpd.conf
-		[ -f "/etc/proftpd/sql.conf" ] && rm /etc/proftpd/sql.conf
+		[ -L "/etc/proftpd/modules.conf" ] && rm /etc/proftpd/modules.conf
+		[ -L "/etc/proftpd/proftpd.conf" ] && rm /etc/proftpd/proftpd.conf
+		[ -L "/etc/proftpd/sql.conf" ] && rm /etc/proftpd/sql.conf
 
 		# PHP
-		[ -f "/etc/php/$PHP_VERSION/fpm/php.ini" ] && rm "/etc/php/$PHP_VERSION/fpm/php.ini"
-		[ -f "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
-		[ -f "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
+		[ -L "/etc/php/$PHP_VERSION/fpm/php.ini" ] && rm "/etc/php/$PHP_VERSION/fpm/php.ini"
+		[ -L "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
+		[ -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
 	 
 		# Configurations
 		[ -f "/etc/fruithost/.config.php" ] && rm /etc/fruithost/.config.php
@@ -415,18 +413,18 @@ set -o errexit
 		
 		# Apache2
   		# @ToDo Check Symlink!
-		[ ! -L "/etc/apache2/sites-available/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-available/global.conf
-		[ ! -L "/etc/apache2/sites-available/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-available/panel.conf
+		[ ! -L "/etc/apache2/sites-enabled/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-enabled/global.conf
+		[ ! -L "/etc/apache2/sites-enabled/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-enabled/panel.conf
 
 		# Set Hostname to ServerName my.fruit.host in /etc/fruithost/config/apache2/panel.conf
 		# @ToDo Debug $ Check if hostname correctly set!
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/fruithost/config/apache2/panel.conf
 		
 		if echo $(cat etc/fruithost/config/apache2/panel.conf) | grep -q "\$hostname"; then
-			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-available/panel.conf"
+			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-enabled/panel.conf"
 		fi
 
-		a2ensite global panel
+		#a2ensite global panel
 		a2dissite 000-default default-ssl
 		service apache2 reload
 
