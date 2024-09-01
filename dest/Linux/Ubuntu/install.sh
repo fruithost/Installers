@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -efu
 set -o errexit
+export DEBIAN_FRONTEND=noninteractive
 
 { # this ensures the entire script is downloaded #
 ## Configuration ##
 	USERNAME=fruithost
 	USER_GROUP=fruithost
 	USER_ID=1010
-	PHP_VERSION=8.4
+	PHP_VERSION=8.3
 	PHP_MODULES=("dev" "pear" "xdebug" "bcmath" "bz2" "uploadprogress" "cli" "curl" "dba" "fpm" "gd" "gmp" "imap" "interbase" "intl" "ldap" "mbstring" "mysql" "odbc" "pgsql" "snmp" "soap" "sqlite3" "sybase" "xmlrpc" "xsl" "zip")
 	APACHE_MODS=("proxy_fcgi" "setenvif" "headers" "actions" "fastcgi" "alias" "ssl" "rewrite")
 	MARIADB_VERSION=11.4
@@ -28,16 +29,24 @@ set -o errexit
 		type "$1" > /dev/null 2>&1
 	}
 	
+	packet() {
+		args="$@"
+		color "\e[36mInstalling Packets:\e[39m $args"
+		apt -yqq install $@ > /dev/null 2>&1
+	}
+	
 	packetmanager_update() {
 		color "Fetching system informations." 
 		. /etc/os-release
 		
-		apt update
-		apt upgrade
-		apt dist-upgrade
-		apt -y install dnsutils git tzdata tzdata jq
-		apt -y install sudo vim make zip unzip bash-completion curl dbus apt-transport-https
-		export DEBIAN_FRONTEND=noninteractive
+		color "\e[36mUpdating Packetmanager..."
+		apt -qq update > /dev/null 2>&1
+		apt -qq upgrade > /dev/null 2>&1
+		apt -qq dist-upgrade > /dev/null 2>&1
+		
+		packet dnsutils git tzdata tzdata jq
+		packet sudo vim make zip unzip bash-completion curl dbus apt-transport-https
+		
 		color "\e[32m[OK]\e[39m Update complete"
 	}
 
@@ -69,24 +78,22 @@ set -o errexit
 			hostnamectl set-hostname "$1"
 		fi
 		
-		
 		color "\e[32m[OK]\e[39m Hostname: $1"
 	}
 
 	# Install Network-Tools
 	install_net_tools() {
-		apt -y install lshw
+		packet lshw
 		color "\e[32m[OK]\e[39m Installed."
 	}
 
 	# Webserver
 	install_webserver() {
-		add-apt-repository -y ppa:ondrej/apache2
+		add-apt-repository -y ppa:ondrej/apache2 > /dev/null 2>&1
 		
-		apt update
-		apt upgrade
+		apt -qq update > /dev/null 2>&1
 		
-		apt -y install apache2
+		packet apache2
 		color "\e[32m[OK]\e[39m Installed:"
 		apache2 -v
 	}
@@ -115,8 +122,9 @@ set -o errexit
 			color "\e[1;33m[WARN]\e[0;39m MariaDB can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
 		fi
 		
-		apt update
-		apt -y install mariadb-server
+		apt -qq update > /dev/null 2>&1
+		
+		packet mariadb-server
 		color "\e[32m[OK]\e[39m Installed:"
 		mariadb --version
 	}
@@ -134,13 +142,12 @@ set -o errexit
 			color "\e[1;33m[WARN]\e[0;39m PHP $PHP_VERSION can't installed with the latest version. Your Ubuntu-Version is too old. Trying to install manually."
 			PHP_VERSION=7.2
 		else
-			add-apt-repository -y ppa:ondrej/php
+			add-apt-repository -y ppa:ondrej/php > /dev/null 2>&1
 		fi
 		
-		apt -y install lsb-release apt-transport-https ca-certificates libz-dev 
-		apt update
-		apt upgrade
-		apt -y install "php$PHP_VERSION"
+		packet lsb-release apt-transport-https ca-certificates libz-dev 
+		apt -qq update > /dev/null 2>&1
+		packet "php$PHP_VERSION"
 		
 		for i in ${!PHP_MODULES[@]};
 		do
@@ -151,10 +158,10 @@ set -o errexit
 					if [ "$(apt-cache search --names-only "php-$PHP_MODULE")" = "" ]; then
 						color "\e[1;33m[WARN]\e[0;39m The PHP-Module $PHP_MODULE not exists, skipping!"
 					else
-						apt -y install "php-$PHP_MODULE"
+						packet "php-$PHP_MODULE"
 					fi
 				else
-					apt -y install "php$PHP_VERSION-$PHP_MODULE"
+					packet "php$PHP_VERSION-$PHP_MODULE"
 				fi
 			else
 				color "\e[1;33m[WARN]\e[0;39m The PHP-Module $PHP_MODULE already installed, skipping!"
@@ -174,11 +181,11 @@ set -o errexit
 
 	install_apache2_mods() {
 		# protected dirs for apache2
-		apt -y install apache2-utils libaprutil1 libaprutil1-dbd-mysql
-		apt -y install libapache2-mod-authnz-external
+		packet apache2-utils libaprutil1 libaprutil1-dbd-mysql
+		packet libapache2-mod-authnz-external
 		
 		# Security & name resolving for apache2 
-		apt -y install nscd libapache2-mpm-itk
+		packet nscd libapache2-mpm-itk
 		
 		for i in ${!APACHE_MODS[@]};
 		do
@@ -204,7 +211,7 @@ set -o errexit
 	}
 
 	install_proftp() {
-		apt -y install proftpd proftpd-mod-mysql
+		packet proftpd proftpd-mod-mysql
 		
 		# Check if ProFTPD-Modules exists!
 		
@@ -216,7 +223,7 @@ set -o errexit
 		
 		ftp_works=("noble" "jammy")
 		if [[ ${ftp_works[*]} =~ (^|[[:space:]])"$UBUNTU_CODENAME"($|[[:space:]]) ]]; then
-			apt -y install proftpd-mod-crypto proftpd-mod-wrap
+			packet proftpd-mod-crypto proftpd-mod-wrap
 		else
 			color "\e[1;33m[WARN]\e[0;39m The ProFTP-Modules proftpd-mod-crypto & proftpd-mod-wrap are not available, skipping!"
 			error "Missing ProFTPD-Mods: proftpd-mod-crypto, proftpd-mod-wrap";
@@ -242,7 +249,7 @@ set -o errexit
 
 	install_rsyslog() {
 		# RSyslog
-		apt -y install rsyslog rsyslog-mysql 
+		packet rsyslog rsyslog-mysql 
 	}
 
 	create_directorys() {
@@ -290,8 +297,9 @@ set -o errexit
 
 		# PHP
 		[ -L "/etc/php/$PHP_VERSION/fpm/php.ini" ] && rm "/etc/php/$PHP_VERSION/fpm/php.ini"
-		[ -L "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
 		[ -L "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
+		[ -L "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ] && rm "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf"
+		[ -L "/etc/fruithost/config/php/users/panel.conf" ] && rm /etc/fruithost/config/php/users/panel.conf
 	 
 		# Configurations
 		[ -f "/etc/fruithost/.config.php" ] && rm /etc/fruithost/.config.php
@@ -307,25 +315,25 @@ set -o errexit
 	  
 		# Grab latest versions
 		color "\e[36mFetch Panel from fruithost..."
-		git clone https://github.com/fruithost/Panel.git /etc/fruithost/panel
+		git clone -q https://github.com/fruithost/Panel.git /etc/fruithost/panel
 		
 		color "\e[36mFetch Daemon from fruithost..."
-		git clone https://github.com/fruithost/Binary.git /etc/fruithost/bin
+		git clone -q https://github.com/fruithost/Binary.git /etc/fruithost/bin
 		
 		color "\e[36mFetch Default-Configuration from fruithost..."
-		git clone https://github.com/fruithost/Config.git /etc/fruithost/config
+		git clone -q https://github.com/fruithost/Config.git /etc/fruithost/config
 		
 		color "\e[36mFetch Themes from fruithost..."
-		git clone https://github.com/fruithost/Themes.git /etc/fruithost/themes
+		git clone -q https://github.com/fruithost/Themes.git /etc/fruithost/themes
 		
 		color "\e[36mFetch Placeholders from fruithost..."
-		git clone https://github.com/fruithost/Placeholder.git /etc/fruithost/placeholder
+		git clone -q https://github.com/fruithost/Placeholder.git /etc/fruithost/placeholder
 		
 		# Adding Modules Folder
 		read -p $'Do you want to download all available Modules for fruithost? (y/n): ' go;
 		if [ "$go" = 'y' ]; then
 			color "\e[36mFetch Modules from fruithost..."
-			git clone https://github.com/fruithost/Modules.git /etc/fruithost/modules
+			git clone -q https://github.com/fruithost/Modules.git /etc/fruithost/modules
 		else
 			color "\e[1;33m[WARN]\e[0;39m Skipping download Modules."
 			[ ! -d "/etc/fruithost/modules" ] && mkdir /etc/fruithost/modules
@@ -336,6 +344,9 @@ set -o errexit
 		chmod 0777 /etc/fruithost/bin/cli.php
 		chmod 0777 /etc/fruithost/bin/cronjob
 		chmod 0777 /etc/fruithost/bin/fruithost.sh
+		
+		
+		[ ! -d "/etc/fruithost/config/php/users/" ] && mkdir /etc/fruithost/config/php/users/
 		
 		# Adding global scripts
 		color "\e[36mRegistering global Scripts..."
@@ -412,20 +423,25 @@ set -o errexit
 		admin_password=$(password_generate)
 		
 		# Apache2
-  		# @ToDo Check Symlink!
 		[ ! -L "/etc/apache2/sites-enabled/global.conf" ] && ln -s /etc/fruithost/config/apache2/global.conf /etc/apache2/sites-enabled/global.conf
 		[ ! -L "/etc/apache2/sites-enabled/panel.conf" ] && ln -s /etc/fruithost/config/apache2/panel.conf /etc/apache2/sites-enabled/panel.conf
 
 		# Set Hostname to ServerName my.fruit.host in /etc/fruithost/config/apache2/panel.conf
 		# @ToDo Debug $ Check if hostname correctly set!
 		sed -i -e "s/\$hostname/my\.${HOSTNAME}/g" /etc/fruithost/config/apache2/panel.conf
+		sed -i -e "s/\$phpversion/${PHP_VERSION}/g" /etc/fruithost/config/apache2/panel.conf
 		
-		if echo $(cat etc/fruithost/config/apache2/panel.conf) | grep -q "\$hostname"; then
+		if echo $(cat /etc/fruithost/config/apache2/panel.conf) | grep -q "\$hostname"; then
 			error "The Hostname-Variable (hostname) can't set. Please fix the variable \$hostname to \"$HOSTNAME\" it on following file:\n/etc/apache2/sites-enabled/panel.conf"
 		fi
+		
+		if echo $(cat /etc/fruithost/config/apache2/panel.conf) | grep -q "\$phpversion"; then
+			error "The PHP-Variable (Version) can't set. Please fix the variable \$phpversion to \"$PHP_VERSION\" it on following file:\n/etc/apache2/sites-enabled/panel.conf"
+		fi
 
-		#a2ensite global panel
-		a2dissite 000-default default-ssl
+		#a2ensite global pane
+		[ -L "/etc/apache2/sites-enabled/000-default.conf" ] && (a2dissite 000-default)
+		[ -L "/etc/apache2/sites-enabled/default-ssl.conf" ] && (a2dissite default-ssl) 
 		service apache2 reload
 
 		# PHP
