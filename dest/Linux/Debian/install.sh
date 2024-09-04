@@ -91,9 +91,12 @@ set -o errexit
 
 	# Webserver
 	install_webserver() {
-		add-apt-repository -y ppa:ondrej/apache2 > /dev/null 2>&1
-		
-		apt -qqq update
+		# Wont work in Debian 12
+		if [ "$VERSION_CODENAME" != "bookworm" ]; then
+			add-apt-repository -y ppa:ondrej/apache2 > /dev/null 2>&1
+			
+			apt -qqq update
+		fi
 		
 		packet apache2
 		color "\e[32m[OK]\e[39m Installed:"
