@@ -46,7 +46,7 @@ export DEBIAN_FRONTEND=noninteractive
 		apt -qqq upgrade
 		apt -qqq dist-upgrade
 		
-		packet dnsutils git tzdata tzdata jq
+		packet dnsutils git tzdata tzdata jq cron
 		packet sudo vim make zip unzip bash-completion curl dbus apt-transport-https
 		
 		color "\e[32m[OK]\e[39m Update complete"
