@@ -14,7 +14,7 @@ set -efu
 		color "\e[1;37m\033[41m\e[K  $1\e[K"
 		color "\e[91m\033[41m\e[K \n"
 	}
-	
+		
 	detect_os() {
 		os_arch=`uname -m`
 		os_type=`uname -s`
@@ -67,29 +67,41 @@ set -efu
 			error "You've tried to install fruithost on \033[1;37m$os_type. 😒\nCurrently, fruithost can only installed on Linux-Systems, Sorry!"
 		fi
 	}
+	
+	detect_host() {
+		ip_hostname=`hostname`
+		ip_address=`hostname -I | awk '{print $1}'`
+		ip_address_public=`curl -L -s -o- api.ipify.org`
+	}
 
 
 # CALL #
-	color "\e[33mWelcome to fruithost installer!"
+	color "\n\e[33mWelcome to 🍇 \e[1;95mfruithost\e[0;33m installer!"
 	
 	if [ `id -u` -ne 0 ]; then
 	  error "Please run the installation as root!                             "
 	  exit
 	fi
 	
-	color "\e[33mDetecting OS,..."
 	detect_os
+	detect_host
 	
-	color "    \e[1;35mType:\e[0;0m             $os_type"
-	color "    \e[1;35mName:\e[0;0m             $os_name"
-	color "    \e[1;35mVersion:\e[0;0m          $os_version"
-	color "    \e[1;35mArchitecture:\e[0;0m     $os_arch"
-	color "    \e[1;35mCodename:\e[0;0m         $os_code\n"
+	color "\n  \e[4;90mNetwork"
+	color "    \e[1;94mHostname:\e[0;0m         $ip_hostname"
+	color "    \e[1;94mLocal IP:\e[0;0m         $ip_address"
+	color "    \e[1;94mPublic IP:\e[0;0m        $ip_address_public"
+	
+	color "\n  \e[4;90mSystem"
+	color "    \e[1;94mType:\e[0;0m             $os_type"
+	color "    \e[1;94mName:\e[0;0m             $os_name"
+	color "    \e[1;94mVersion:\e[0;0m          $os_version"
+	color "    \e[1;94mArchitecture:\e[0;0m     $os_arch"
+	color "    \e[1;94mCodename:\e[0;0m         $os_code\n"
 	
 	url="https://update.fruithost.de/installer/$os_type/$os_name/$os_version/$os_arch"
 	
 	curl --connect-timeout 5 -IsL "$url" > /dev/null || ( error "Cannot connect to $url to download the fruithost-Installer.\n  Check your firewall settings. If you are using a proxy, make sure you have set the HTTPS_PROXY environment variable." && exit 132 )
-	
+		
 	bash <(curl -H 'Cache-Control: no-cache, no-store' -L -s -o- $url || wget -q -O - $url)
 	
 } # this ensures the entire script is downloaded #

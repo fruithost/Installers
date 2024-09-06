@@ -368,7 +368,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 		# Config-File
 		color "\e[36mCreate Config-File..."
-		echo "<?php" >> /etc/fruithost/.config.php
+		echo "<?php" > /etc/fruithost/.config.php
 		echo "	# Database Connection" >> /etc/fruithost/.config.php
 		echo "	define('DATABASE_HOSTNAME',		'localhost');" >> /etc/fruithost/.config.php
 		echo "	define('DATABASE_PORT',			3306);" >> /etc/fruithost/.config.php
@@ -385,7 +385,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 		# Mail-File
 		color "\e[36mCreate Mail-File..."
-		echo "<?php" >> /etc/fruithost/.mail.php
+		echo "<?php" > /etc/fruithost/.mail.php
 		echo "	define('MAIL_EXTERNAL',		false);" >> /etc/fruithost/.mail.php
 		echo "	define('MAIL_HOSTNAME',		'smtp.yourhostname.com');" >> /etc/fruithost/.mail.php
 		echo "	define('MAIL_PORT',		25);" >> /etc/fruithost/.mail.php
@@ -416,7 +416,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 		# Security-File
 		color "\e[36mCreate Security-File..."
-		echo "<?php" >> /etc/fruithost/.security.php
+		echo "<?php" > /etc/fruithost/.security.php
 		echo "	# DO NOT MODIFY, IT WILL BREAKS ALL YOUR DATA!" >> /etc/fruithost/.security.php
 		echo "" >> /etc/fruithost/.security.php
 		echo "	define('MYSQL_PASSWORTD_SALT',	'$mysql_salt');" >> /etc/fruithost/.security.php
@@ -521,14 +521,24 @@ export DEBIAN_FRONTEND=noninteractive
 			fi
 		fi
 
-		color "\n\e[90m\033[47m\e[K"
+		color "\n\e[90m\033[42m\e[K"
+		color "\e[90m\033[42m\e[K"
+		color "\e[90m\033[47m\e[K"
 		color "\e[1;90m\033[1;47m\e[K  Setup was finished!"
 		color "\e[1;90m\033[47m\e[K  The Admin-Account was created. You can now login to:\n\e[K"
 		color "\e[1;90m\033[47m\e[K  \e[1;35mURL:\e[90m          \e[4;34mhttp://my.${HOSTNAME}/\e[90m\e[K"
 		color "\e[1;90m\033[47m\e[K  \e[1;35mUsername:\e[90m     admin\e[K"
 		color "\e[1;90m\033[47m\e[K  \e[1;35mPassword:\e[90m     ${admin_password}\e[K"
-		color "\e[1;91m\033[47m\e[K  Please change the password after the first login!\e[K"
-		color "\e[90m\033[47m\e[K \n"
+		color "\e[1;91m\033[47m\e[K                Please change the password after the first login!\e[K"
+		color "\e[90m\033[47m\e[K"
+		
+		read -p $'\nDo you want to store the admin password in root directory? (y/n): ' go;
+		if [ "$go" == 'y' ]; then
+			echo -e "Password: ${admin_password}" > "/root/admin-password.txt"
+			chmod 0400 "/root/admin-password.txt"
+			color "\e[1;33m[WARN]\e[0;39m The Password was stored in /root/admin-password.txt."
+			color "\e[1;33m[WARN]\e[0;39m Please delete this file after the first usage!"
+		fi
 	}
 
 	install_software() {
